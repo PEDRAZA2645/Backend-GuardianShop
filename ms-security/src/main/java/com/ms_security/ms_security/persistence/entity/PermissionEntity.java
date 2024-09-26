@@ -1,5 +1,6 @@
 package com.ms_security.ms_security.persistence.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,7 +14,7 @@ import java.util.Set;
 @NoArgsConstructor
 @ToString
 @EqualsAndHashCode
-@Table(name = "PERMISSION", schema = "SECURITY_MICROSERVICES")
+@Table(name = "PERMISSION", schema = "ECOMERS_WITH_INVENTORY")
 @Entity
 public class PermissionEntity {
     @Id
@@ -38,4 +39,5 @@ public class PermissionEntity {
     private String dateTimeCreation;
     @Column(name = "DATE_TIME_UPDATE")
     private String dateTimeUpdate;
+
 }

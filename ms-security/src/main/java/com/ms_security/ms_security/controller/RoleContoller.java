@@ -124,4 +124,24 @@ public class RoleContoller {
     public ResponseEntity<String> getRoleWhitPermission(@RequestBody String entity) {
         return _iRoleService.findRoleWithPermissionById(entity);
     }
+
+    /**
+          * Fetches a user along with their associated roles by user ID.
+          *
+          * @param entity the ID of the user whose roles are to be fetched
+          * @return a ResponseEntity containing the user and their roles
+          */
+    @Operation(
+            summary = "GET USER WITH ROLES",
+            description = "FETCHES A USER ALONG WITH THEIR ASSOCIATED ROLES BY USER ID."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Successful Operation", content = @Content(schema = @Schema(implementation = ResponseEntity.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid ID Supplied", content = @Content(schema = @Schema(implementation = ResponseEntity.class))),
+            @ApiResponse(responseCode = "404", description = "User Not Found", content = @Content(schema = @Schema(implementation = ResponseEntity.class)))
+    })
+    @PostMapping("/list/roles")
+    public ResponseEntity<String> getUserWithRoles(@RequestBody String entity) {
+            return _iRoleService.findRoleWithPermissionById(entity);
+    }
 }

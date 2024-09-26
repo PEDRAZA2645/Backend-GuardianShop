@@ -56,11 +56,9 @@ public class AuthServicesImpl implements IAuthServices {
             }
             if (verifyPassword(login.getPassword(), user.get().getPassword())) {
                 Set<RoleEntity> roles = user.get().getRoles();
-                Set<String> permissions = new HashSet<>();
+                Set<PermissionEntity> permissions = new HashSet<>();
                 for (RoleEntity role : roles) {
-                    for (PermissionEntity permission : role.getPermissions()) {
-                        permissions.add(permission.getName());
-                    }
+                    permissions.addAll(role.getPermissions()); // Agrega permisos directamente
                 }
                 String token = _jwtUtilityService.generateJWT(user.get().getId(), roles, permissions);
                 jwt.put("jwt", token);
@@ -72,6 +70,7 @@ public class AuthServicesImpl implements IAuthServices {
             throw new Exception(e.toString());
         }
     }
+
 
 
 

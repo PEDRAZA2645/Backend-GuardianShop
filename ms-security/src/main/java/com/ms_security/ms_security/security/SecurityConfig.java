@@ -28,23 +28,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * </ul>
  * </p>
  *
- * <p>
- * The configuration performs the following actions:
- * <ul>
- *     <li>Disables CSRF protection.</li>
- *     <li>Configures authorization rules where:
- *         <ul>
- *             <li>Routes starting with "/auth/**", "/form/**", and "/services/**" are allowed without authentication.</li>
- *             <li>Routes starting with "/permission/**", "/role/**", and "/users/**" require the "ADMIN" role.</li>
- *             <li>All other requests must be authenticated.</li>
- *         </ul>
- *     </li>
- *     <li>Configures session management policy to be stateless.</li>
- *     <li>Adds the JWT authorization filter before the user authentication filter.</li>
- *     <li>Configures exception handling for unauthorized authentication responses.</li>
- * </ul>
- * </p>
- *
  * @see JWTAuthorizationFilter
  * @see IJWTUtilityService
  */
@@ -55,6 +38,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final IJWTUtilityService _jwtUtilityService;
+    private final RoleConsultations _roleConsultations; // Asegúrate de tener esto
+    private final PermissionConsultations _permissionConsultations; // Asegúrate de tener esto
 
     /**
      * Configures the security filter chain for HTTP.
@@ -65,11 +50,18 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        // Crear una instancia del JWTAuthorizationFilter y pasarle las dependencias necesarias
+        JWTAuthorizationFilter jwtAuthorizationFilter = new JWTAuthorizationFilter(
+                _jwtUtilityService,
+                _roleConsultations,
+                _permissionConsultations
+        );
+
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authRequests ->
                         authRequests
-                                .requestMatchers("/auth/**", "/form/**", "/services/**").permitAll()
+                                .requestMatchers("/auth/**", "/form/list/id", "/form/list/all", "/services/list/id", "/services/list/all").permitAll()
                                 .requestMatchers("/permission/**", "/role/**", "/users/**")
                                 .hasRole("ADMIN")
                                 .anyRequest().authenticated()
@@ -77,8 +69,8 @@ public class SecurityConfig {
                 .sessionManagement(sessionManagement ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .addFilterBefore(new JWTAuthorizationFilter(_jwtUtilityService),
-                        UsernamePasswordAuthenticationFilter.class)
+                // Añadir el filtro JWT antes del filtro de autenticación de usuario
+                .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exceptionHandling ->
                         exceptionHandling.authenticationEntryPoint((request, response, authException) -> {
                             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");

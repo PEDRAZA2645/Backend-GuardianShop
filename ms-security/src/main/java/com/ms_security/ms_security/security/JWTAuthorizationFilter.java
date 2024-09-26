@@ -1,6 +1,9 @@
 package com.ms_security.ms_security.security;
 
+import com.ms_security.ms_security.persistence.entity.PermissionEntity;
 import com.ms_security.ms_security.service.IJWTUtilityService;
+import com.ms_security.ms_security.service.impl.consultations.PermissionConsultations;
+import com.ms_security.ms_security.service.impl.consultations.RoleConsultations;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.JWTClaimsSet;
 import jakarta.servlet.FilterChain;
@@ -21,6 +24,7 @@ import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -46,6 +50,8 @@ import java.util.stream.Collectors;
 public class JWTAuthorizationFilter extends OncePerRequestFilter {
 
     private final IJWTUtilityService _jwtUtilityService;
+    private final RoleConsultations _roleConsultations;
+    private final PermissionConsultations _permissionConsultations;
 
     /**
      * Processes the HTTP request and performs JWT authorization.
@@ -76,17 +82,47 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
         String token = header.substring(7);
         try {
             JWTClaimsSet claims = _jwtUtilityService.parseJWT(token);
-
+            String username = claims.getSubject();
             String[] rolesArray = claims.getStringArrayClaim("roles");
             List<SimpleGrantedAuthority> authorities = Arrays.stream(rolesArray)
-                    .map(SimpleGrantedAuthority::new)
+                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role)) // Agregar el prefijo "ROLE_"
                     .collect(Collectors.toList());
+
+
+            // Crear el token de autenticación
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                    claims.getSubject(),
+                    username,
                     null,
                     authorities
             );
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+            // Verificar permisos
+            String requestUri = request.getRequestURI();
+            String requestMethod = request.getMethod();  // Obtén el método HTTP de la solicitud
+            boolean hasPermission = false;
+
+            for (String role : rolesArray) {
+                // Obtén los permisos del rol
+                Set<PermissionEntity> permissions = _permissionConsultations.findPermissionsByRoleName(role);
+                // Verifica si hay un permiso que coincida con la URI y el método
+                hasPermission = permissions.stream().anyMatch(permission ->
+                        permission.getUrl().equals(requestUri) &&
+                                permission.getMethod().equalsIgnoreCase(requestMethod) // Asegúrate de comparar el método
+                );
+
+                if (hasPermission) {
+                    break; // Si ya tiene permiso, sal del bucle
+                }
+            }
+
+            // Si no tiene permiso, responde con un error 403
+            if (!hasPermission) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.getWriter().write("Access Denied: You do not have permission to access this resource");
+                return;
+            }
+
         } catch (ParseException | NoSuchAlgorithmException | InvalidKeySpecException | JOSEException e) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.getWriter().write("Invalid or expired token");
@@ -94,4 +130,5 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
         }
         filterChain.doFilter(request, response);
     }
+
 }

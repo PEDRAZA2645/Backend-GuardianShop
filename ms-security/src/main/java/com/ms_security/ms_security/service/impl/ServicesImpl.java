@@ -144,6 +144,7 @@ public class ServicesImpl implements IServicesService {
         servicesDto.setDescription(entity.getDescription());
         servicesDto.setImageUrl(entity.getImageUrl());
         servicesDto.setStatus(entity.getStatus());
+        servicesDto.setInventoryCodeId(entity.getInventoryCodeId());
         servicesDto.setCreateUser(entity.getCreateUser());
         servicesDto.setUpdateUser(entity.getUpdateUser());
         return servicesDto;
@@ -163,6 +164,7 @@ public class ServicesImpl implements IServicesService {
         servicesEntity.setDescription(dto.getDescription());
         servicesEntity.setImageUrl(dto.getImageUrl());
         servicesEntity.setStatus(dto.getStatus());
+        servicesEntity.setInventoryCodeId(dto.getInventoryCodeId());
         servicesEntity.setCreateUser(entity.getCreateUser());
         servicesEntity.setUpdateUser(entity.getUpdateUser());
         servicesEntity.setDateTimeCreation(entity.getDateTimeCreation());

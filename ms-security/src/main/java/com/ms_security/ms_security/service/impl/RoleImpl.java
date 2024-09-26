@@ -184,7 +184,7 @@ public class RoleImpl implements IRoleService {
         RoleEntity role = userEntity.get();
         RoleDto roleDto = parse(role);
         Set<String> roleNames = role.getPermissions().stream()
-                .map(PermissionEntity::getName)
+                .map(PermissionEntity::getUrl)
                 .collect(Collectors.toSet());
         roleDto.setPermissions(roleNames);
         log.info("SEARCH USER WITH ROLES IS ENDED");

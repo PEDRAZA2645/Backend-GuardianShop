@@ -28,6 +28,9 @@ public class ServicesDto implements Serializable {
     @NotNull(message = "The status field cannot be null", groups = {Create.class, Update.class})
     private Boolean status;
 
+    @NotNull(message = "The inventoryCodeId field cannot be null", groups = {Create.class, Update.class})
+    private Long inventoryCodeId;
+
     @NotNull(message = "The createUser field cannot be null", groups = Create.class)
     @Null(message = "The createUser field must be null", groups = Update.class)
     private String createUser;

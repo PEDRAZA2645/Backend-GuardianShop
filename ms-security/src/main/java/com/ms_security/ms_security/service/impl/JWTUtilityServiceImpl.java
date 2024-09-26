@@ -1,5 +1,6 @@
 package com.ms_security.ms_security.service.impl;
 
+import com.ms_security.ms_security.persistence.entity.PermissionEntity;
 import com.ms_security.ms_security.persistence.entity.RoleEntity;
 import com.ms_security.ms_security.service.IJWTUtilityService;
 import com.nimbusds.jose.*;
@@ -54,7 +55,7 @@ public class JWTUtilityServiceImpl implements IJWTUtilityService {
      * @throws JOSEException if there is an error generating the JWT
      */
     @Override
-    public String generateJWT(Long userId, Set<RoleEntity> roles, Set<String> permissions) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException {
+    public String generateJWT(Long userId, Set<RoleEntity> roles, Set<PermissionEntity> permissions) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException {
         PrivateKey privateKey = loadPrivateKey(privateKeyResource);
 
         JWSSigner signer = new RSASSASigner(privateKey);
@@ -63,9 +64,9 @@ public class JWTUtilityServiceImpl implements IJWTUtilityService {
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
                 .subject(userId.toString())
                 .issueTime(now)
-                .expirationTime(new Date(now.getTime() + 14400000)) // 4 hours expiration
+                .expirationTime(new Date(now.getTime() + 14400000)) // 4 horas de expiración
                 .claim("roles", roles.stream().map(RoleEntity::getName).toList())
-                .claim("permissions", permissions)
+                .claim("permissions", permissions.stream().map(PermissionEntity::getUrl).toList()) // Cambia aquí para usar la URL
                 .build();
 
         SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.RS256), claimsSet);
@@ -73,6 +74,7 @@ public class JWTUtilityServiceImpl implements IJWTUtilityService {
 
         return signedJWT.serialize();
     }
+
 
 
     /**

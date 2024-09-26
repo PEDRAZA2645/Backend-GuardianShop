@@ -1,5 +1,6 @@
 package com.ms_security.ms_security.service;
 
+import com.ms_security.ms_security.persistence.entity.PermissionEntity;
 import com.ms_security.ms_security.persistence.entity.RoleEntity;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.JWTClaimsSet;
@@ -28,7 +29,7 @@ public interface IJWTUtilityService {
      * @throws InvalidKeySpecException if the key specification is invalid
      * @throws JOSEException if there is an error creating or signing the JWT
      */
-    public String generateJWT(Long userId, Set<RoleEntity> roles, Set<String> permissions) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException;
+    public String generateJWT(Long userId, Set<RoleEntity> roles, Set<PermissionEntity> permissions) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException;
 
     /**
      * Parses and validates a JWT.

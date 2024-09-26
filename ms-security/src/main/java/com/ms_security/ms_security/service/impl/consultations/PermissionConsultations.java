@@ -1,6 +1,7 @@
 package com.ms_security.ms_security.service.impl.consultations;
 
 import com.ms_security.ms_security.persistence.entity.PermissionEntity;
+import com.ms_security.ms_security.persistence.entity.RoleEntity;
 import com.ms_security.ms_security.persistence.repository.IPermissionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -21,6 +22,7 @@ import java.util.Set;
 @Log4j2
 public class PermissionConsultations {
     private final IPermissionRepository _permissionRepository;
+    private final RoleConsultations _roleConsultations;
 
     @Cacheable(value = "PermissionFindById", key = "#id")
     @Transactional(readOnly = true)
@@ -52,9 +54,9 @@ public class PermissionConsultations {
         return _permissionRepository.findByName(name);
     }
 
-//    @Cacheable(value = "PermissionFindByRoleId", key = "#roleId")
-//    @Transactional(readOnly = true)
-//    public Set<PermissionEntity> findByRoleId(Long roleId) {
-//        return _permissionRepository.findByRolesId(roleId);
-//    }
+    @Transactional(readOnly = true)
+    public Set<PermissionEntity> findPermissionsByRoleName(String roleName) {
+        Optional<RoleEntity> roleEntityOptional = _roleConsultations.findByNameWithPermissions(roleName);
+        return roleEntityOptional.map(RoleEntity::getPermissions).orElse(Set.of());
+    }
 }

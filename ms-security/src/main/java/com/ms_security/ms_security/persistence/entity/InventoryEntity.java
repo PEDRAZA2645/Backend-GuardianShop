@@ -3,28 +3,30 @@ package com.ms_security.ms_security.persistence.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.Date;
+import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
-@Table(name = "SERVICES", schema = "ECOMERS_WITH_INVENTORY")
+@Table(name = "INVENTORY", schema = "ECOMERS_WITH_INVENTORY")
 @NoArgsConstructor
 @Getter
 @Setter
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode
-public class ServicesEntity {
+public class InventoryEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "SERVICES_ID", nullable = false)
+    @Column(name = "INVENTORY_ID", nullable = false)
     private Long id;
-    @Column(name = "NAME_SERVICE", nullable = false)
+    @Column(name = "PRODUCT_CODE", nullable = false, unique = true)
+    private Long code;
+    @Column(name = "PRODUCT_NAME", nullable = false)
     private String name;
-    @Column(name = "DESCRIPTION", nullable = false)
-    private String description;
-    @Column(name = "IMAGE_URL", nullable = false)
-    private String imageUrl;
+    @Column(name = "QUANTITY", nullable = false)
+    private Long quantity;
+    @Column(name = "COST", nullable = false)
+    private BigDecimal cost;
     @Column(name = "STATUS", nullable = false)
     private Boolean status;
     @Column(name = "CREATE_USER")
@@ -36,8 +38,9 @@ public class ServicesEntity {
     @Column(name = "DATE_TIME_UPDATE")
     private String dateTimeUpdate;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "PRODUCT_CODE", referencedColumnName = "PRODUCT_CODE", insertable = false, updatable = false)
-    private InventoryEntity inventory;
-    @Column(name = "PRODUCT_CODE")
-    private Long inventoryCodeId;
+    @JoinColumn(name = "CATEGORY_ID", referencedColumnName = "CATEGORY_ID", insertable = false, updatable = false)
+    private CategoryEntity category;
+    @Column(name = "CATEGORY_ID")
+    private Long categoryId;
+
 }

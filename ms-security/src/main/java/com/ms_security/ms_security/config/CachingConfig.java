@@ -69,7 +69,14 @@ public class CachingConfig {
                 "UserFindByAll",
                 "UserFindByUserName",
                 "UserFindUserWithRolesById",
-                "UserFindByEmail"
+                "UserFindByEmail",
+                "InventoryFindById",
+                "InventoryFindAll",
+                "InventoryFindByCode",
+                "InventoryFindByCodeAndCategoryId",
+                "CategoryFindById",
+                "CategoryFindAll",
+                "CategoryFindByName"
         );
 
         cacheManager.setCacheNames(cacheNames);

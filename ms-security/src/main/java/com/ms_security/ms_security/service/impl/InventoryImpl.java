@@ -43,8 +43,7 @@ public class InventoryImpl implements IInventoryService {
         log.info(EncoderUtilities.formatJson(findByIdDto));
         Optional<InventoryEntity> inventoryEntity = _inventoryConsultations.findById(findByIdDto.getId());
         if(inventoryEntity.isEmpty()) return _errorControlUtilities.handleSuccess(null, 3L);
-        InventoryEntity inventory = inventoryEntity.get();
-        InventoryDto inventoryDto = parse(inventory);
+        InventoryDto inventoryDto = parse(inventoryEntity.get());
         log.info("SEARCH BY ID IS ENDED");
         return _errorControlUtilities.handleSuccess(inventoryDto, 1L);
     }

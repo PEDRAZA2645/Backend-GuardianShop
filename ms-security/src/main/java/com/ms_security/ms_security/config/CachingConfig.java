@@ -76,7 +76,14 @@ public class CachingConfig {
                 "InventoryFindByCodeAndCategoryId",
                 "CategoryFindById",
                 "CategoryFindAll",
-                "CategoryFindByName"
+                "CategoryFindByName",
+                "CartFindById",
+                "CartFindAll",
+                "CartFindByUserId",
+                "OrderFindById",
+                "OrderFindAll",
+                "OrderItemFindById",
+                "OrderItemFindAll"
         );
 
         cacheManager.setCacheNames(cacheNames);

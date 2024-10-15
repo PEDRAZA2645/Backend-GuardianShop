@@ -3,21 +3,20 @@ package com.ms_security.ms_security.service.impl;
 import com.ms_security.ms_security.persistence.entity.PermissionEntity;
 import com.ms_security.ms_security.persistence.entity.RoleEntity;
 import com.ms_security.ms_security.persistence.entity.UserEntity;
-import com.ms_security.ms_security.persistence.repository.IUserRepository;
 import com.ms_security.ms_security.service.IAuthServices;
+import com.ms_security.ms_security.service.IEmailService;
 import com.ms_security.ms_security.service.IJWTUtilityService;
 import com.ms_security.ms_security.service.impl.consultations.UserConsultations;
+import com.ms_security.ms_security.service.model.dto.ChangePasswordDto;
+import com.ms_security.ms_security.service.model.dto.EmailDto;
 import com.ms_security.ms_security.service.model.dto.LoginDto;
-import com.ms_security.ms_security.service.model.dto.ResponseDto;
+import com.ms_security.ms_security.service.model.dto.ResponseErrorDto;
 import com.ms_security.ms_security.service.model.validation.UserValidation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Implementation of the authentication services.
@@ -31,7 +30,9 @@ import java.util.Set;
 public class AuthServicesImpl implements IAuthServices {
 
     private final UserConsultations _userConsultations;
+    private final HashSet<String> _revokedTokens = new HashSet<>();
     private final IJWTUtilityService _jwtUtilityService;
+    private final IEmailService _emailService;
     private final UserValidation _userValidation;
 
     /**
@@ -86,9 +87,9 @@ public class AuthServicesImpl implements IAuthServices {
      * @throws Exception if there is an error during registration
      */
     @Override
-    public ResponseDto register(UserEntity user) throws Exception {
+    public ResponseErrorDto register(UserEntity user) throws Exception {
         try {
-            ResponseDto response = _userValidation.validate(user);
+            ResponseErrorDto response = _userValidation.validate(user);
             if (response.getNumOfErrors() > 0) {
                 return response;
             }
@@ -121,5 +122,53 @@ public class AuthServicesImpl implements IAuthServices {
      */
     private boolean verifyPassword(String enteredPassword, String storedPassword) {
         return new BCryptPasswordEncoder().matches(enteredPassword, storedPassword);
+    }
+    @Override
+    public void sendPasswordResetEmail(String email) throws Exception {
+        Optional<UserEntity> user = _userConsultations.findByEmail(email);
+        if (user.isEmpty()) {
+            throw new Exception("User not found");
+        }
+        String token = generateResetToken(user.get());
+        String resetLink = "http://localhost:3000/reset-password?token=" + token;
+        EmailDto emailDto = new EmailDto();
+        emailDto.setRecipient(email);
+        emailDto.setSubject("Password Reset Request");
+        emailDto.setMessage("Click the link to reset your password: " + resetLink);
+
+        _emailService.sendEmail(emailDto);
+    }
+
+    @Override
+    public void changePassword(ChangePasswordDto changePasswordDto) throws Exception {
+        Optional<UserEntity> user = getUserFromToken(changePasswordDto.getToken());
+        if (user.isPresent()) {
+            BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
+            user.get().setPassword(encoder.encode(changePasswordDto.getNewPassword()));
+            _userConsultations.updateData(user.get());
+        } else {
+            throw new Exception("Invalid token");
+        }
+    }
+
+    private String generateResetToken(UserEntity user) {
+        return UUID.randomUUID().toString();
+    }
+
+    private Optional<UserEntity> getUserFromToken(String token) {
+        return Optional.empty(); // Implementa la lógica real
+    }
+
+    /**
+     * Logs out the user by revoking the provided token.
+     * <p>
+     * This method adds the token to the revoked tokens set, effectively invalidating it.
+     * </p>
+     *
+     * @param token the JWT token to be revoked
+     */
+    @Override
+    public void logout(String token) {
+        _revokedTokens.add(token);
     }
 }

@@ -2,8 +2,9 @@ package com.ms_security.ms_security.controller;
 
 import com.ms_security.ms_security.persistence.entity.UserEntity;
 import com.ms_security.ms_security.service.IAuthServices;
+import com.ms_security.ms_security.service.model.dto.ChangePasswordDto;
 import com.ms_security.ms_security.service.model.dto.LoginDto;
-import com.ms_security.ms_security.service.model.dto.ResponseDto;
+import com.ms_security.ms_security.service.model.dto.ResponseErrorDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -12,10 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 
@@ -26,6 +24,7 @@ import java.util.HashMap;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:3000")
 public class AuthController {
 
     private final IAuthServices _authServices;
@@ -39,12 +38,12 @@ public class AuthController {
      */
     @Operation(summary = "Register a new user", description = "Registers a new user and returns the registration status.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "User registered successfully", content = @Content(schema = @Schema(implementation = ResponseDto.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content(schema = @Schema(implementation = ResponseDto.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(schema = @Schema(implementation = ResponseDto.class)))
+            @ApiResponse(responseCode = "201", description = "User registered successfully", content = @Content(schema = @Schema(implementation = ResponseErrorDto.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content(schema = @Schema(implementation = ResponseErrorDto.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(schema = @Schema(implementation = ResponseErrorDto.class)))
     })
     @PostMapping("/register")
-    private ResponseEntity<ResponseDto> register(@RequestBody UserEntity user) throws Exception {
+    private ResponseEntity<ResponseErrorDto> register(@RequestBody UserEntity user) throws Exception {
         return new ResponseEntity<>(_authServices.register(user), HttpStatus.CREATED);
     }
 
@@ -68,5 +67,53 @@ public class AuthController {
             return new ResponseEntity<>(login, HttpStatus.OK);
         }
         return new ResponseEntity<>(login, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
+     * Sends a password reset email to the specified user.
+     *
+     * @param email the email address of the user requesting a password reset
+     * @throws Exception if there is an error during the email sending process
+     */
+    @Operation(summary = "Request password reset", description = "Sends a password reset link to the user's email.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Password reset email sent successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid email address"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> sendPasswordResetEmail(@RequestParam String email) throws Exception {
+        _authServices.sendPasswordResetEmail(email);
+        return new ResponseEntity<>("Password reset email sent.", HttpStatus.OK);
+    }
+
+    /**
+     * Resets the user's password using the provided token and new password.
+     *
+     * @param changePasswordDto the data transfer object containing the new password and token
+     * @throws Exception if there is an error during the password change process
+     */
+    @Operation(summary = "Change user password", description = "Resets the user's password.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Password changed successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid password or token"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PostMapping("/change-password")
+    public ResponseEntity<String> changePassword(@RequestBody ChangePasswordDto changePasswordDto) throws Exception {
+        _authServices.changePassword(changePasswordDto);
+        return new ResponseEntity<>("Password changed successfully.", HttpStatus.OK);
+    }
+
+    @Operation(summary = "Logout user", description = "Logs out the user and invalidates the JWT token.")
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@RequestHeader("Authorization") String authorizationHeader) {
+        // Extraer el token del encabezado
+        String token = authorizationHeader.replace("Bearer ", "");
+
+        // Revocar el token
+        _authServices.logout(token);
+
+        return new ResponseEntity<>("Logout successful.", HttpStatus.OK);
     }
 }

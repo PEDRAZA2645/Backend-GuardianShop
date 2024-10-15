@@ -1,5 +1,7 @@
 package com.ms_security.ms_security.controller;
 
+import com.ms_security.ms_security.persistence.entity.EntriesEntity;
+import com.ms_security.ms_security.persistence.entity.ExitsEntity;
 import com.ms_security.ms_security.service.IInventoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -12,6 +14,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * Controller class for handling inventory-related operations.
@@ -104,4 +108,53 @@ public class InventoryController {
     public ResponseEntity<String> updateData(@RequestBody String entity){
         return _iInventoryService.updateData(entity);
     }
+
+    @Operation(
+            description = "LIST ALL ENTRIES FOR A PRODUCT"
+    )
+    @ApiResponses(
+            value = {
+                    @ApiResponse(responseCode = "200", description = "SUCCESSFUL OPERATION", content = @Content(schema = @Schema(implementation = ResponseEntity.class))),
+                    @ApiResponse(responseCode = "400", description = "GENERAL ERROR", content = @Content(schema = @Schema(implementation = ResponseEntity.class)))
+            }
+    )
+    @PostMapping(path = "/listAllEntries", produces = {"application/json"})
+    public ResponseEntity<List<EntriesEntity>>entries(@RequestBody String entity){
+        return _iInventoryService.getEntries(entity);
+    }
+
+    @Operation(
+            description = "LIST ALL OUTPUTS OF A PRODUCT"
+    )
+    @ApiResponses(
+            value = {
+                    @ApiResponse(responseCode = "200", description = "SUCCESSFUL OPERATION", content = @Content(schema = @Schema(implementation = ResponseEntity.class))),
+                    @ApiResponse(responseCode = "400", description = "GENERAL ERROR", content = @Content(schema = @Schema(implementation = ResponseEntity.class)))
+            }
+    )
+    @PostMapping(path = "/listAllExits", produces = {"application/json"})
+    public ResponseEntity<List<ExitsEntity>> exits(@RequestBody String entity){
+        return _iInventoryService.getExits(entity);
+    }
+
+//    /**
+//     * Updates a batch of inventory items by decoding a Base64 string containing item details,
+//     * validating the data, and updating the names of the corresponding inventory items.
+//     *
+//     * @param entity Base64 encoded string containing the inventory data to update
+//     * @return a ResponseEntity indicating the result of the batch update operation
+//     */
+//    @Operation(
+//            description = "UPDATE NAMES OF INVENTORY ITEMS IN BATCH"
+//    )
+//    @ApiResponses(
+//            value = {
+//                    @ApiResponse(responseCode = "200", description = "SUCCESSFUL OPERATION", content = @Content(schema = @Schema(implementation = ResponseEntity.class))),
+//                    @ApiResponse(responseCode = "400", description = "INVALID REQUEST OR DATA", content = @Content(schema = @Schema(implementation = ResponseEntity.class)))
+//            }
+//    )
+//    @PostMapping(path = "/updateBatch", produces = {"application/json"})
+//    public ResponseEntity<String> updateBatch(@RequestBody String entity) {
+//       return _iInventoryService.updateBatch(entity);
+//    }
 }

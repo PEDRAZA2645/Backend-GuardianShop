@@ -1,5 +1,6 @@
 package com.ms_security.ms_security.persistence.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,24 +21,28 @@ public class OrderEntity {
     @Column(name = "ORDER_ID", nullable = false)
     private Long id;
 
-    @Column(name = "USER_ID", nullable = false)
-    private Long userId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ORDER_NUMBER", unique = true, nullable = false)
+    private Long orderNumber;
 
-    @Column(name = "TOTAL_COST", nullable = false)
-    private BigDecimal totalCost;
+    @Column(name = "PRODUCT_NAME", nullable = false)
+    private String productName;
+
+    @Column(name = "QUANTITY", nullable = false)
+    private Long quantity;
+
+    @Column(name = "UNIT_PRICE", nullable = false)
+    private BigDecimal unitPrice;
+
+    @Column(name = "TOTAL_PRICE", nullable = false)
+    private BigDecimal totalPrice;
 
     @Column(name = "STATUS", nullable = false)
-    private String status; // e.g., "PENDING", "PAID", "CANCELLED"
+    private String status;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @JsonIgnore
     private List<OrderItemEntity> items;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "PRODUCT_ID", insertable = false, updatable = false)
-    private InventoryEntity product;
-
-    @Column(name = "PRODUCT_ID")
-    private Long productId;
 
     @Column(name = "CREATE_USER")
     private String createUser;
@@ -45,13 +50,13 @@ public class OrderEntity {
     @Column(name = "UPDATE_USER")
     private String updateUser;
 
-    @Column(name = "DATETIME_CREATION")
+    @Column(name = "DATE_TIME_CREATION")
     private String dateTimeCreation;
 
-    @Column(name = "DATETIME_UPDATE")
+    @Column(name = "DATE_TIME_UPDATE")
     private String dateTimeUpdate;
 
-    @Column(name = "DATETIME_ORDER")
+    @Column(name = "DATE_TIME_ORDER")
     private String dateTimeOrder;
 
 }

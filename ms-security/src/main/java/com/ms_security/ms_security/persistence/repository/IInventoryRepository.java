@@ -6,11 +6,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
-public interface IInventoryRepository extends JpaRepository<InventoryEntity, Long> {
+public interface  IInventoryRepository extends JpaRepository<InventoryEntity, Long> {
 
     Page<InventoryEntity> findAll(Pageable pageable);
-    Optional<InventoryEntity> findByCode(Long code);
-    Optional<InventoryEntity> findByCodeAndCategoryId(Long categoriId, Long code);
+    Optional<InventoryEntity> findByProductCode(String code);
+    List<InventoryEntity> findAllById(Iterable<Long> ids);
+
+    List<InventoryEntity> findAllByServiceId(Long serviceId);
+
+
 }

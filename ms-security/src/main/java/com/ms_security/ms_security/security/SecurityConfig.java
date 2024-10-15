@@ -15,6 +15,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
  * Security configuration for the application.
@@ -38,8 +40,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final IJWTUtilityService _jwtUtilityService;
-    private final RoleConsultations _roleConsultations; // Asegúrate de tener esto
-    private final PermissionConsultations _permissionConsultations; // Asegúrate de tener esto
+    private final RoleConsultations _roleConsultations;
+    private final PermissionConsultations _permissionConsultations;
 
     /**
      * Configures the security filter chain for HTTP.
@@ -50,18 +52,25 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // Crear una instancia del JWTAuthorizationFilter y pasarle las dependencias necesarias
         JWTAuthorizationFilter jwtAuthorizationFilter = new JWTAuthorizationFilter(
                 _jwtUtilityService,
                 _roleConsultations,
                 _permissionConsultations
         );
+        CorsConfiguration corsConfiguration = new CorsConfiguration();
+        corsConfiguration.addAllowedOrigin("http://localhost:3000");
+        corsConfiguration.addAllowedMethod("*");
+        corsConfiguration.addAllowedHeader("*");
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", corsConfiguration);
 
         return http
                 .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(source))
                 .authorizeHttpRequests(authRequests ->
                         authRequests
-                                .requestMatchers("/auth/**", "/form/list/id", "/form/list/all", "/services/list/id", "/services/list/all").permitAll()
+                                .requestMatchers("/auth/**", "/form/list/id", "/form/list/all", "/services/list/all").permitAll()
                                 .requestMatchers("/permission/**", "/role/**", "/users/**")
                                 .hasRole("ADMIN")
                                 .anyRequest().authenticated()
@@ -69,7 +78,6 @@ public class SecurityConfig {
                 .sessionManagement(sessionManagement ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                // Añadir el filtro JWT antes del filtro de autenticación de usuario
                 .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exceptionHandling ->
                         exceptionHandling.authenticationEntryPoint((request, response, authException) -> {

@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -34,15 +35,40 @@ public class OrderConsultations {
         return _orderRepository.findAll(pageable);
     }
 
-    @CacheEvict(value = {"OrderFindById", "OrderFindAll"}, allEntries = true)
+    @CacheEvict(value = {"OrderFindById", "OrderFindAll", "OrderMaxNumber", "OrderFindByOrderNumber", "OrderFindAllByStatus"}, allEntries = true)
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, rollbackFor = Exception.class)
     public OrderEntity addNew(OrderEntity entity) {
         return _orderRepository.save(entity);
     }
 
-    @CacheEvict(value = {"OrderFindById", "OrderFindAll"}, allEntries = true)
+    @CacheEvict(value = {"OrderFindById", "OrderFindAll", "OrderMaxNumber", "OrderFindByOrderNumber", "OrderFindAllByStatus"}, allEntries = true)
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, rollbackFor = Exception.class)
     public OrderEntity updateData(OrderEntity entity) {
         return _orderRepository.save(entity);
     }
+
+    @Cacheable(value = "OrderMaxNumber")
+    @Transactional(readOnly = true)
+    public Long findMaxOrderNumber() {
+        return _orderRepository.findMaxOrderNumber();
+    }
+
+    @Cacheable(value = "OrderFindByOrderNumber", key = "#orderNumber")
+    @Transactional(readOnly = true)
+    public Optional<OrderEntity> findByOrderNumber(Long orderNumber) {
+        return _orderRepository.findByOrderNumber(orderNumber);
+    }
+
+    @Cacheable(value = "OrderFindAllByStatus", key = "#orderNumber")
+    @Transactional(readOnly = true)
+    public List<OrderEntity> findAllByStatus(String status) {
+        return _orderRepository.findAllByStatus(status);
+    }
+
+    @Cacheable(value = "OrderFindByOrderNumberWithItems", key = "#orderNumber")
+    @Transactional(readOnly = true)
+    public Optional<OrderEntity> findByOrderNumberWithItems(Long orderNumber) {
+        return _orderRepository.findByOrderNumberWithItems(orderNumber);
+    }
+
 }

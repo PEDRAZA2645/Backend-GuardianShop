@@ -54,6 +54,7 @@ public class PermissionConsultations {
         return _permissionRepository.findByName(name);
     }
 
+    @Cacheable(value = "PermissionFindByRoleId", key = "#roleName")
     @Transactional(readOnly = true)
     public Set<PermissionEntity> findPermissionsByRoleName(String roleName) {
         Optional<RoleEntity> roleEntityOptional = _roleConsultations.findByNameWithPermissions(roleName);

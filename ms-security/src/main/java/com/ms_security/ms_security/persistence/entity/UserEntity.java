@@ -48,5 +48,4 @@ public class UserEntity {
     )
     @JsonManagedReference
     private Set<RoleEntity> roles = new HashSet<>();
-
 }

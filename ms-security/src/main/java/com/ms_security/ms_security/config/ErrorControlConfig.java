@@ -27,7 +27,7 @@ public class ErrorControlConfig {
     private final ObjectMapper objectMapper;
     private List<ErrorResponseDto> errorResponseDtos;
 
-    @Value("${extrenal.url-api-container}")
+    @Value("${external.url-api-container}")
     private String externalApiUrl;
 
     /**

@@ -2,7 +2,7 @@ package com.ms_security.ms_security.service.model.validation;
 
 
 import com.ms_security.ms_security.persistence.entity.UserEntity;
-import com.ms_security.ms_security.service.model.dto.ResponseDto;
+import com.ms_security.ms_security.service.model.dto.ResponseErrorDto;
 
 /**
  * Class for validating user data.
@@ -19,8 +19,8 @@ public class UserValidation {
      * @param user the UserEntity object to validate
      * @return a ResponseDto containing the number of errors and error messages
      */
-    public ResponseDto validate(UserEntity user) {
-        ResponseDto responseDto = new ResponseDto();
+    public ResponseErrorDto validate(UserEntity user) {
+        ResponseErrorDto responseDto = new ResponseErrorDto();
         responseDto.setNumOfErrors(0);
         StringBuilder errorMessage = new StringBuilder();
         if (isInvalidName(user.getName())) {

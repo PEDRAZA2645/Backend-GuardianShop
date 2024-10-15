@@ -63,4 +63,5 @@ public class UserConsultations {
     public Optional<UserEntity> findByEmail(String email) {
         return _iUserRepository.findByEmail(email);
     }
+
 }

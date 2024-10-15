@@ -15,4 +15,10 @@ public interface IOrderService {
     ResponseEntity<String> addNew(String encode);
 
     ResponseEntity<String> updateData(String encode);
+
+    ResponseEntity<String> cancelOrder(String encode);
+
+    ResponseEntity<String> checkout(String cartIdBase64);
+
+    ResponseEntity<String> deactivatePendingOrdersOlder();
 }

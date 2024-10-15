@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -52,9 +53,19 @@ public class CartConsultations {
         return _cartRepository.save(entity);
     }
 
+    @Transactional(readOnly = true)
+    public List<CartEntity> findAllByStatus(String status) {
+        return _cartRepository.findAllByStatus(status);
+    }
+
     @CacheEvict(value = {"CartFindById", "CartFindAll"}, allEntries = true)
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, rollbackFor = Exception.class)
-    public void delete(CartEntity id) {
-        _cartRepository.delete(id);
+    public void updateCartStatus(Long cartId, String status) {
+        _cartRepository.updateCartStatus(cartId, status);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<CartEntity> findByUserIdAndStatus(Long userId, String status) {
+        return _cartRepository.findByUserIdAndStatus(userId, status);
     }
 }

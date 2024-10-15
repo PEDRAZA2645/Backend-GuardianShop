@@ -1,6 +1,11 @@
 package com.ms_security.ms_security.service;
 
+import com.ms_security.ms_security.persistence.entity.EntriesEntity;
+import com.ms_security.ms_security.persistence.entity.ExitsEntity;
 import org.springframework.http.ResponseEntity;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 public interface IInventoryService {
 
@@ -35,4 +40,19 @@ public interface IInventoryService {
      * @return a ResponseEntity indicating the success or failure of the update
      */
     ResponseEntity<String> updateData(String encode);
+
+    ResponseEntity<List<EntriesEntity>> getEntries(String encode);
+    ResponseEntity<List<ExitsEntity>> getExits(String encode);
+
+    void handleEntry(String productId, Long quantity, BigDecimal purchasePrice, String updateUser);
+    void handleExit(String productId, Long quantity, String updateUser);
+
+    void closeMonthlyInventory();
+    void openInitialInventory();
+    void stockReturned(String productId, Long quantity, String updateUser);
+    void stockExit(String productId, Long quantity, String updateUser);
+
+    void stockAdjustment(String productId, Long quantity, String updateUser);
+
+//    public ResponseEntity<String> updateBatch(String encode);
 }

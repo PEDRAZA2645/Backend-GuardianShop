@@ -5,7 +5,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ResponseDto {
-    private int numOfErrors;
-    private String message;
+public class PaypalPaymentDto {
+    private Double amount;
 }

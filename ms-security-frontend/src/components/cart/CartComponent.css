@@ -1,0 +1,20 @@
+.cart {
+    background-color: #f4f4f4;
+    padding: 20px;
+    border-radius: 10px;
+  }
+  
+  .cart h2 {
+    color: #333;
+  }
+  
+  .cart ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .cart li {
+    padding: 10px 0;
+    border-bottom: 1px solid #ccc;
+  }
+  

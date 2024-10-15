@@ -1,5 +1,6 @@
 package com.ms_security.ms_security.persistence.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,38 +17,38 @@ import java.math.BigDecimal;
 public class OrderItemEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ORDER_ITEM_ID", nullable = false)
+    @Column(name = "ORDER_ITEM_ID")
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ORDER_ID", insertable = false, updatable = false)
-    private OrderEntity order;
-
-    @Column(name = "ORDER_ID", nullable = false)
-    private Long orderId;
+    @Column(name = "PRODUCT_NAME")
+    private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "CART_ID", insertable = false, updatable = false)
+    @JsonIgnore
     private CartEntity cart;
 
-    @Column(name = "CART_ID", nullable = false)
+    @Column(name = "CART_ID")
     private Long cartId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "INVENTORY_ID", insertable = false, updatable = false)
+    @JsonIgnore
     private InventoryEntity product;
 
-    @Column(name = "INVENTORY_ID", nullable = false)
+    @Column(name = "INVENTORY_ID")
     private Long productId;
 
-    @Column(name = "QUANTITY", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ORDER_ID")
+    @JsonIgnore
+    private OrderEntity order;
+
+    @Column(name = "QUANTITY")
     private Long quantity;
 
-    @Column(name = "PRICE", nullable = false)
+    @Column(name = "PRICE")
     private BigDecimal price;
-
-    @Column(name = "SUBTOTAL", nullable = false)
-    private BigDecimal subtotal;
 
     @Column(name = "CREATE_USER")
     private String createUser;
@@ -55,10 +56,11 @@ public class OrderItemEntity {
     @Column(name = "UPDATE_USER")
     private String updateUser;
 
-    @Column(name = "DATETIME_CREATION")
+    @Column(name = "DATE_TIME_CREATION")
     private String dateTimeCreation;
 
-    @Column(name = "DATETIME_UPDATE")
+    @Column(name = "DATE_TIME_UPDATE")
     private String dateTimeUpdate;
+
 
 }

@@ -16,11 +16,11 @@ public interface ICartService {
 
     ResponseEntity<String> updateData(String encode);
 
-    ResponseEntity<String> addToCart(String cartIdBase64, String inventoryIdBase64, String quantityBase64);
+    ResponseEntity<String> addToCart(String encode);
 
-    ResponseEntity<String> removeFromCart(String cartIdBase64, String inventoryIdBase64);
+    ResponseEntity<String> removeItemFromCart(String encode);
 
     ResponseEntity<String> deleteCart(String encode);
 
-    ResponseEntity<String> checkout(String cartIdBase64);
+    ResponseEntity<String> deleteAllPendingCarts();
 }

@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -30,19 +31,40 @@ public class OrderItemConsultations {
 
     @Cacheable(value = "OrderItemFindAll")
     @Transactional(readOnly = true)
-    public Page<OrderItemEntity> findAll(Pageable pageable) {
-        return _orderItemRepository.findAll(pageable);
+    public List<OrderItemEntity> findAll() {
+        return _orderItemRepository.findAll();
     }
 
-    @CacheEvict(value = {"OrderItemFindById", "OrderItemFindAll"}, allEntries = true)
+    @CacheEvict(value = {"OrderItemFindById", "OrderItemFindAll", "OrderItemFindByProductAndCart"}, allEntries = true)
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, rollbackFor = Exception.class)
     public OrderItemEntity addNew(OrderItemEntity entity) {
         return _orderItemRepository.save(entity);
     }
 
-    @CacheEvict(value = {"OrderItemFindById", "OrderItemFindAll"}, allEntries = true)
+    @CacheEvict(value = {"OrderItemFindById", "OrderItemFindAll", "OrderItemFindByProductAndCart"}, allEntries = true)
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, rollbackFor = Exception.class)
     public OrderItemEntity updateData(OrderItemEntity entity) {
         return _orderItemRepository.save(entity);
     }
+
+    @CacheEvict(value = {"OrderItemFindById", "OrderItemFindAll"}, allEntries = true)
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, rollbackFor = Exception.class)
+    public void deleteById(Long id) {
+        _orderItemRepository.deleteById(id);
+    }
+
+    @Cacheable(value = "OrderItemFindByProductAndCart", key = "#productId + '-' + #cartId")
+    @Transactional(readOnly = true)
+    public Optional<OrderItemEntity> findByProductIdAndCartId(Long productId, Long cartId) {
+        log.info("Searching for OrderItem with Product ID: {} and Cart ID: {}", productId, cartId);
+        return _orderItemRepository.findByProductIdAndCartId(productId, cartId);
+    }
+
+    @Cacheable(value = "OrderItemFindByOrderId", key = "#orderId")
+    @Transactional(readOnly = true)
+    public List<OrderItemEntity> findByOrderId(Long orderId) {
+        log.info("Searching for OrderItems with Order ID: {}", orderId);
+        return _orderItemRepository.findByOrderId(orderId);
+    }
+
 }

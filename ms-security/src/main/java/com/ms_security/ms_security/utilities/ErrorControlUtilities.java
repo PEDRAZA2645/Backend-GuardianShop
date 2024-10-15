@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -59,6 +61,21 @@ public class ErrorControlUtilities {
         }
     }
 
+    public <T> ResponseEntity<List<T>> handleSuccessList(List<T> list, Long id) {
+        Optional<ErrorResponseDto> errorResponseDto = searchById(id);
+        if (errorResponseDto.isPresent()) {
+            ErrorResponseDto errorDto = errorResponseDto.get();
+            BasicResponseDto<List<T>> response = new BasicResponseDto<>(
+                    errorDto.getErrorId(),
+                    errorDto.getErrorName(),
+                    list
+            );
+            return ResponseEntity.status(HttpStatus.OK).body(list);
+        } else {
+            return (ResponseEntity<List<T>>) handleGeneralList(list, id);
+        }
+    }
+
     /**
      * Handles a general operation when the error ID is not found.
      * Returns a response with status BAD REQUEST (400) and includes a default error message.
@@ -77,4 +94,26 @@ public class ErrorControlUtilities {
         String encodeResponse = EncoderUtilities.encodeResponse(responseDto);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(encodeResponse);
     }
+
+    /**
+     * Handles a general operation when the error ID is not found.
+     * Returns a response with status BAD REQUEST (400) and includes a default error message.
+     *
+     * @param list the list of objects to include in the response
+     * @param id   the ID of the error to look up
+     * @param <T>  the type of the objects in the list
+     * @return a ResponseEntity containing the list in case of an error
+     */
+    public <T> ResponseEntity handleGeneralList(List<T> list, Long id) {
+        Optional<ErrorResponseDto> errorResponseDto = searchById(id);
+        BasicResponseDto<List<T>> responseDto = new BasicResponseDto<>(
+                errorResponseDto.map(ErrorResponseDto::getErrorId).orElse(-1L),
+                errorResponseDto.map(ErrorResponseDto::getErrorName).orElse("UNKNOWN ERROR"),
+                list
+        );
+        List encodeResponse = Collections.singletonList(EncoderUtilities.encodeResponse(responseDto));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(encodeResponse);
+    }
+
+
 }

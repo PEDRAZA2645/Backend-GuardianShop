@@ -1,28 +1,31 @@
 package com.ms_security.ms_security.service.impl;
 
-import com.ms_security.ms_security.persistence.entity.OrderEntity; // Asegúrate de tener esta entidad
-import com.ms_security.ms_security.persistence.entity.OrderItemEntity;
-import com.ms_security.ms_security.service.IOrderItemService;
-import com.ms_security.ms_security.service.IOrderService;
-import com.ms_security.ms_security.service.impl.consultations.OrderConsultations; // Asegúrate de tener esta clase
-import com.ms_security.ms_security.service.model.dto.FindByPageDto;
-import com.ms_security.ms_security.service.model.dto.InventoryDto;
-import com.ms_security.ms_security.service.model.dto.OrderDto; // Asegúrate de tener este DTO
-import com.ms_security.ms_security.service.model.dto.OrderItemDto;
+import com.ms_security.ms_security.controller.UnifiedPaymentController;
+import com.ms_security.ms_security.persistence.entity.*;
+import com.ms_security.ms_security.service.*;
+import com.ms_security.ms_security.service.impl.consultations.CartConsultations;
+import com.ms_security.ms_security.service.impl.consultations.InventoryConsultations;
+import com.ms_security.ms_security.service.impl.consultations.OrderConsultations;
+import com.ms_security.ms_security.service.impl.consultations.OrderItemConsultations;
+import com.ms_security.ms_security.service.model.dto.*;
 import com.ms_security.ms_security.utilities.EncoderUtilities;
 import com.ms_security.ms_security.utilities.ErrorControlUtilities;
-import com.ms_security.ms_security.utilities.PaginationUtilities;
+import com.ms_security.ms_security.utilities.PdfGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Log4j2
 @Service
@@ -30,7 +33,16 @@ import java.util.Optional;
 public class OrderImpl implements IOrderService {
 
     private final OrderConsultations _orderConsultations;
+    private final OrderItemConsultations _orderItemConsultations;
+    private final IExitsServices _exitsServices;
+    private final IEntriesServices _entriesServices;
+    private final CartConsultations _cartConsultations;
+    private final InventoryConsultations _inventoryConsultations;
+    private final UnifiedPaymentController _unifiedPaymentController;
+    private final IParametersService _iParametersService;
+    private final IInventoryService _iInventoryService;
     private final ErrorControlUtilities _errorControlUtilities;
+
 
     /**
      * Method responsible for searching for a record by its ID.
@@ -59,22 +71,26 @@ public class OrderImpl implements IOrderService {
      */
     @Override
     public ResponseEntity<String> findAll(String encode) {
-        log.info("SEARCH FOR PAGES BEGINS");
         EncoderUtilities.validateBase64(encode);
+        log.info("INITIATING PAGINATED SEARCH");
         FindByPageDto request = EncoderUtilities.decodeRequest(encode, FindByPageDto.class);
         EncoderUtilities.validator(request);
         log.info(EncoderUtilities.formatJson(request));
-        Long pageSize = request.getSize() > 0 ? request.getSize() : 10L;
-        Long pageId = request.getPage() > 0 ? request.getPage() : 1L;
-        String sortBy = "dateTimeCreation";
-        String direction = "asc";
-        Pageable pageable = PaginationUtilities.createPageable(pageId.intValue(), pageSize.intValue(), sortBy, direction);
+        log.info("INITIATING PARAMETER QUERY");
+        Optional<ParametersEntity> pageSizeParam = _iParametersService.findByCodeParameter(1L);
+        log.info("PARAMETER QUERY COMPLETED");
+        Pageable pageable = PageRequest.of(
+                request.getPage() - 1,
+                Integer.parseInt(pageSizeParam.get().getParameter()));
         Page<OrderEntity> pageResult = _orderConsultations.findAll(pageable);
-        List<OrderDto> orderDtos = pageResult.stream().map(this::parse).toList();
+        List<OrderDto> orderDtos = pageResult.stream()
+                .map(this::parse)
+                .toList();
         PageImpl<OrderDto> response = new PageImpl<>(orderDtos, pageable, pageResult.getTotalElements());
-        log.info("SEARCH FOR ALL ORDER ITEMS IS OVER");
-        return _errorControlUtilities.handleSuccess(orderDtos, 1L);
+        log.info("PAGINATED SEARCH COMPLETED");
+        return _errorControlUtilities.handleSuccess(response, 1L);
     }
+
 
     /**
      * Responsible for creating a new order item.
@@ -88,40 +104,315 @@ public class OrderImpl implements IOrderService {
         log.info("INSERT ORDER ITEM BEGINS");
         OrderDto orderDto = EncoderUtilities.decodeRequest(encode, OrderDto.class);
         EncoderUtilities.validator(orderDto);
-        log.info(EncoderUtilities.formatJson(orderDto));
-        OrderEntity orderEntity = parseEnt(orderDto, new OrderEntity());
-        orderEntity.setCreateUser(orderDto.getCreateUser());
-        orderEntity.setDateTimeCreation(new Date().toString());
-        OrderEntity createdOrder = _orderConsultations.addNew(orderEntity);
-        OrderDto createdOrderDto = parse(createdOrder);
-        log.info("INSERT ORDER ITEM ENDED");
-        return _errorControlUtilities.handleSuccess(createdOrderDto, 1L);
+        log.info("DECODED ORDER DTO: " + EncoderUtilities.formatJson(orderDto));
+        Long userId = orderDto.getUserId();
+        log.info("FETCHING CART FOR USER ID: " + userId);
+        Optional<CartEntity> cartEntityOptional = _cartConsultations.findByUserIdAndStatus(userId, "PENDING");
+        if (cartEntityOptional.isPresent()) {
+            CartEntity cartEntity = cartEntityOptional.get();
+            List<OrderItemEntity> cartItems = cartEntity.getItems();
+            log.info("NUMBER OF ITEMS IN CART: " + (cartItems != null ? cartItems.size() : 0));
+            if (cartItems == null || cartItems.isEmpty()) return _errorControlUtilities.handleSuccess(null, 42L);
+            OrderEntity orderEntity = parseEnt(orderDto, new OrderEntity());
+            Long nextOrderNumber = _orderConsultations.findMaxOrderNumber() + 1;
+            log.info("GENERATING NEXT ORDER NUMBER: " + nextOrderNumber);
+            orderEntity.setOrderNumber(nextOrderNumber);
+            orderEntity.setCreateUser(orderDto.getCreateUser());
+            orderEntity.setDateTimeCreation(new Date().toString());
+            orderEntity.setDateTimeOrder(new Date().toString());
+            orderEntity.setStatus("PENDING");
+            List<OrderItemEntity> orderItems = new ArrayList<>();
+            BigDecimal totalOrderPrice = BigDecimal.ZERO;
+            for (OrderItemEntity itemDto : cartItems) {
+                log.info("PROCESSING ITEM: " + itemDto.getName());
+                OrderItemEntity orderItemEntity = new OrderItemEntity();
+                orderItemEntity.setName(itemDto.getName());
+                orderItemEntity.setQuantity(itemDto.getQuantity());
+                orderItemEntity.setPrice(itemDto.getPrice());
+                orderItemEntity.setProduct(itemDto.getProduct());
+                orderItemEntity.setCartId(itemDto.getCartId());
+                orderItemEntity.setUpdateUser(itemDto.getUpdateUser());
+                BigDecimal itemTotalPrice = itemDto.getPrice().multiply(new BigDecimal(itemDto.getQuantity()));
+                totalOrderPrice = totalOrderPrice.add(itemTotalPrice);
+                log.info("ITEM TOTAL PRICE: " + itemTotalPrice);
+                orderItemEntity.setOrder(orderEntity);
+                orderItems.add(orderItemEntity);
+            }
+            orderEntity.setUnitPrice(orderItems.stream().findFirst().map(OrderItemEntity::getPrice).orElse(BigDecimal.ZERO));
+            orderEntity.setProductName(orderItems.stream().findFirst().map(OrderItemEntity::getName).orElse(""));
+            orderEntity.setQuantity(orderItems.stream().map(OrderItemEntity::getQuantity).reduce(0L, Long::sum));
+            orderEntity.setItems(orderItems);
+            orderEntity.setTotalPrice(totalOrderPrice);
+            log.info("TOTAL ORDER PRICE: " + totalOrderPrice);
+            OrderEntity createdOrder = _orderConsultations.addNew(orderEntity);
+            log.info("ORDER CREATED SUCCESSFULLY WITH ORDER NUMBER: " + createdOrder.getOrderNumber());
+            OrderDto createdOrderDto = parse(createdOrder);
+            log.info("INSERT ORDER ITEM ENDED");
+            log.info("STARTING INVENTORY OUTPUT ");
+            for (OrderItemEntity orderItem : orderItems) {
+                Optional<InventoryEntity> optionalInventory = _inventoryConsultations.findById(orderItem.getProductId());
+                if (optionalInventory.isPresent()) {
+                    InventoryEntity inventory = optionalInventory.get();
+                    _iInventoryService.stockExit(inventory.getProductCode(), orderItem.getQuantity(), orderItem.getCreateUser());
+                    log.info("STOCK UPDATED SUCCESSFULLY FOR PRODUCT: " + inventory.getProductCode());
+                } else _errorControlUtilities.handleSuccess(null, 36L);
+                log.info("ENDING INVENTORY OUTPUT ");
+            }
+            return _errorControlUtilities.handleSuccess(createdOrderDto, 1L);
+        } else return _errorControlUtilities.handleSuccess(null, 44L);
     }
 
     /**
-     * Responsible for updating an existing order item.
+     * Responsible for updating order items based on the items in the user's cart.
      *
-     * @param encode Base64 encoded request containing the updated details.
-     * @return A ResponseEntity object containing the updated order item or an error message.
+     * @param encode Base64 encoded request containing the order details.
+     * @return A ResponseEntity object containing the updated order or an error message.
      */
     @Override
     public ResponseEntity<String> updateData(String encode) {
         EncoderUtilities.validateBase64(encode);
-        log.info("UPDATE ORDER ITEM BEGINS");
+        log.info("INSERT OR UPDATE ORDER ITEM BEGINS");
+        OrderDto orderDto = EncoderUtilities.decodeRequest(encode, OrderDto.class);
+        EncoderUtilities.validator(orderDto);
+        log.info("DECODED ORDER DTO: " + EncoderUtilities.formatJson(orderDto));
+        Long userId = orderDto.getUserId();
+        log.info("FETCHING CART FOR USER ID: " + userId);
+        Optional<OrderEntity> entity = _orderConsultations.findByOrderNumber(orderDto.getOrderNumber());
+        if (entity.isEmpty()) return _errorControlUtilities.handleSuccess(null, 30L);
+        Optional<CartEntity> cartEntityOptional = _cartConsultations.findByUserIdAndStatus(userId, "PENDING");
+        if (cartEntityOptional.isPresent()) {
+            CartEntity cartEntity = cartEntityOptional.get();
+            List<OrderItemEntity> cartItems = cartEntity.getItems();
+            log.info("NUMBER OF ITEMS IN CART: " + (cartItems != null ? cartItems.size() : 0));
+            if (cartItems == null || cartItems.isEmpty()) return _errorControlUtilities.handleSuccess(null, 42L);
+            OrderEntity orderEntity = parseEnt(orderDto, new OrderEntity());
+            orderEntity.setOrderNumber(entity.get().getOrderNumber());
+            orderEntity.setUpdateUser(orderDto.getUpdateUser());
+            orderEntity.setDateTimeUpdate(new Date().toString());
+            orderEntity.setDateTimeOrder(entity.get().getDateTimeOrder());
+            orderEntity.setStatus("PENDING");
+            List<OrderItemEntity> orderItems = new ArrayList<>();
+            BigDecimal totalOrderPrice = BigDecimal.ZERO;
+            for (OrderItemEntity itemDto : cartItems) {
+                log.info("PROCESSING ITEM: " + itemDto.getName());
+                Optional<OrderItemEntity> existingItemOptional = _orderItemConsultations.findByProductIdAndCartId(itemDto.getProductId(), cartEntity.getId());
+                OrderItemEntity orderItemEntity;
+                if (existingItemOptional.isPresent()) {
+                    orderItemEntity = existingItemOptional.get();
+                    orderItemEntity.setCartId(itemDto.getCartId());
+                    orderItemEntity.setName(itemDto.getName());
+                    orderItemEntity.setProductId(itemDto.getProductId());
+                    orderItemEntity.setQuantity(itemDto.getQuantity());
+                    orderItemEntity.setPrice(itemDto.getPrice());
+                    orderItemEntity.setDateTimeUpdate(new Date().toString());
+                    log.info("UPDATED ITEM: " + orderItemEntity.getName());
+                } else {
+                    orderItemEntity = new OrderItemEntity();
+                    orderItemEntity.setName(itemDto.getName());
+                    orderItemEntity.setQuantity(itemDto.getQuantity());
+                    orderItemEntity.setPrice(itemDto.getPrice());
+                    orderItemEntity.setProduct(itemDto.getProduct());
+                    orderItemEntity.setCartId(itemDto.getCartId());
+                    orderItemEntity.setUpdateUser(itemDto.getUpdateUser());
+                    log.info("CREATED NEW ITEM: " + orderItemEntity.getName());
+                }
+                BigDecimal itemTotalPrice = orderItemEntity.getPrice().multiply(new BigDecimal(orderItemEntity.getQuantity()));
+                totalOrderPrice = totalOrderPrice.add(itemTotalPrice);
+                log.info("ITEM TOTAL PRICE: " + itemTotalPrice);
+                orderItemEntity.setOrder(orderEntity);
+                orderItems.add(orderItemEntity);
+            }
+            orderEntity.setUnitPrice(orderItems.stream().findFirst().map(OrderItemEntity::getPrice).orElse(BigDecimal.ZERO));
+            orderEntity.setProductName(orderItems.stream().findFirst().map(OrderItemEntity::getName).orElse(""));
+            orderEntity.setQuantity(orderItems.stream().map(OrderItemEntity::getQuantity).reduce(0L, Long::sum));
+            orderEntity.setItems(orderItems);
+            orderEntity.setTotalPrice(totalOrderPrice);
+            log.info("TOTAL ORDER PRICE: " + totalOrderPrice);
+            for (OrderItemEntity orderItem : orderItems) {
+                log.info("STARTING INVENTORY OUTPUT ");
+                Optional<InventoryEntity> optionalInventory = _inventoryConsultations.findById(orderItem.getProductId());
+                if (optionalInventory.isPresent()) {
+                    InventoryEntity inventory = optionalInventory.get();
+                    _iInventoryService.stockReturned(inventory.getProductCode(), inventory.getPendingStock(), orderItem.getUpdateUser());
+                    log.info("STOCK UPDATED SUCCESSFULLY FOR PRODUCT: " + inventory.getProductCode());
+                } else _errorControlUtilities.handleSuccess(null, 36L);
+                log.info("ENDING INVENTORY OUTPUT ");
+            }
+            OrderEntity updatedOrder = _orderConsultations.updateData(orderEntity);
+            log.info("ORDER UPDATED SUCCESSFULLY WITH ORDER NUMBER: " + updatedOrder.getOrderNumber());
+            OrderDto updatedOrderDto = parse(updatedOrder);
+            log.info("UPDATE ORDER ITEM ENDED");
+            for (OrderItemEntity orderItem : orderItems) {
+                log.info("STARTING INVENTORY OUTPUT ");
+                Optional<InventoryEntity> optionalInventory = _inventoryConsultations.findById(orderItem.getProductId());
+                if (optionalInventory.isPresent()) {
+                    InventoryEntity inventory = optionalInventory.get();
+                    _iInventoryService.stockExit(inventory.getProductCode(), orderItem.getQuantity(), orderItem.getUpdateUser());
+                    log.info("STOCK UPDATED SUCCESSFULLY FOR PRODUCT: " + inventory.getProductCode());
+                } else _errorControlUtilities.handleSuccess(null, 36L);
+                log.info("ENDING INVENTORY OUTPUT ");
+            }
+            return _errorControlUtilities.handleSuccess(updatedOrderDto, 1L);
+        } else return _errorControlUtilities.handleSuccess(null, 44L);
+    }
+
+
+
+
+
+    /**
+     * Cancels an existing order by changing its status to INACTIVE.
+     *
+     * @param encode Base64 encoded request containing the ID of the order to be canceled.
+     * @return A ResponseEntity object indicating the success or failure of the operation.
+     */
+    @Override
+    public ResponseEntity<String> cancelOrder(String encode) {
+        EncoderUtilities.validateBase64(encode);
+        log.info("CANCEL ORDER PROCESS BEGINS");
         OrderDto orderDto = EncoderUtilities.decodeRequest(encode, OrderDto.class);
         EncoderUtilities.validator(orderDto);
         log.info(EncoderUtilities.formatJson(orderDto));
-        Optional<OrderEntity> existingOrderEntity = _orderConsultations.findById(orderDto.getId());
-        if (existingOrderEntity.isEmpty()) return _errorControlUtilities.handleSuccess(null, 3L);
-        OrderEntity updatedOrderEntity = parseEnt(orderDto, existingOrderEntity.get());
-        updatedOrderEntity.setUpdateUser(orderDto.getUpdateUser());
-        updatedOrderEntity.setDateTimeUpdate(new Date().toString());
-        updatedOrderEntity.setDateTimeOrder(new Date().toString());
-        OrderEntity updatedOrder = _orderConsultations.updateData(updatedOrderEntity);
+        Optional<OrderEntity> orderEntityOptional = _orderConsultations.findByOrderNumber(orderDto.getOrderNumber());
+        if (orderEntityOptional.isEmpty()) return _errorControlUtilities.handleSuccess(null, 30L);
+        OrderEntity orderEntity = orderEntityOptional.get();
+        orderEntity.setStatus("CANCELLED");
+        orderEntity.setUpdateUser(orderDto.getUpdateUser());
+        orderEntity.setDateTimeUpdate(new Date().toString());
+        for (OrderItemEntity item : orderEntity.getItems()) {
+            Optional<InventoryEntity> inventory = _inventoryConsultations.findById(item.getProduct().getId());
+            if (inventory.isEmpty()) return _errorControlUtilities.handleSuccess(null, 3L);
+            _entriesServices.returnToStock(item.getProduct().getId(), item.getQuantity(), orderDto.getUpdateUser());
+//            Optional<InventoryEntity> inventoryEntityOpt = _inventoryConsultations.findById(item.getProduct().getId());
+//            if (inventoryEntityOpt.isPresent()) {
+//                InventoryEntity inventories = inventoryEntityOpt.get();
+//                inventory.get().setPendingStock(inventory.get().getPendingStock() - item.getQuantity());
+//                _inventoryConsultations.updateData(inventories);
+//            }
+        }
+        OrderEntity updatedOrder = _orderConsultations.updateData(orderEntity);
         OrderDto updatedOrderDto = parse(updatedOrder);
-        log.info("UPDATE ORDER ITEM ENDED");
+        log.info("CANCEL ORDER PROCESS ENDED");
         return _errorControlUtilities.handleSuccess(updatedOrderDto, 1L);
     }
+
+
+
+    @Override
+    public ResponseEntity<String> checkout(String encode) {
+        EncoderUtilities.validateBase64(encode);
+        log.info("CHECKOUT PROCESS BEGINS");
+        OrderDto orderDto = EncoderUtilities.decodeRequest(encode, OrderDto.class);
+        EncoderUtilities.validator(orderDto);
+        log.info(EncoderUtilities.formatJson(orderDto));
+        log.info("START SEARCH ORDER BY NUMBER");
+        Optional<OrderEntity> orderEntity = _orderConsultations.findByOrderNumber(orderDto.getOrderNumber());
+        if (orderEntity.isEmpty()) return _errorControlUtilities.handleSuccess(null, 30L);
+        log.info("END SEARCH ORDER BY NUMBER");
+        OrderEntity order = orderEntity.get();
+        if (!"PENDING".equals(order.getStatus())) return _errorControlUtilities.handleSuccess(null, 46L);
+        log.info("START PAYMENT PROCESS");
+        ResponseEntity<String> paymentResponse = processPayment(orderDto.getUnifiedPaymentDto());
+        if (!paymentResponse.getStatusCode().is2xxSuccessful()) {
+            log.info("PAYMENT FAILED");
+            return _errorControlUtilities.handleSuccess(null, 40L);
+        }
+        log.info("PAYMENT SUCCESSFUL, UPDATING ORDER STATUS");
+        order.setStatus("PAID");
+        order.setUpdateUser(orderDto.getUpdateUser());
+        order.setDateTimeUpdate(new Date().toString());
+        OrderEntity checkedOutOrder = _orderConsultations.updateData(order);
+        OrderDto updatedOrderDto = parse(checkedOutOrder);
+        List<OrderItemEntity> orderItems = _orderItemConsultations.findByOrderId(checkedOutOrder.getId());
+        generateOrderPdf(checkedOutOrder, orderDto.getUnifiedPaymentDto(), orderItems);
+        log.info("UPDATING CART STATUS TO COMPLETED");
+        if (!orderItems.isEmpty()) {
+            for (OrderItemEntity item : orderItems) {
+                log.info("ORDER ITEM: " + EncoderUtilities.formatJson(item));
+            }
+            Long cartId = orderItems.stream().map(OrderItemEntity::getCartId).findFirst().orElse(null);
+            _cartConsultations.updateCartStatus(cartId, "COMPLETED");
+            log.info("CART STATUS UPDATED TO COMPLETED FOR CART ID: " + cartId);
+        } else {
+            log.warn("NO ORDER ITEMS FOUND FOR ORDER ID: " + checkedOutOrder.getId());
+        }
+        log.info("CHECKOUT PROCESS ENDED");
+        log.info("TRIGGERING INVENTORY EXIT");
+        if ("PAID".equals(updatedOrderDto.getStatus())) {
+            String encodedOrderDto = EncoderUtilities.encodeResponse(updatedOrderDto);
+            _exitsServices.exitOnPayment(String.valueOf(encodedOrderDto));
+        }
+        log.info("EXIT ON PAYMENT TRIGGERED");
+        return _errorControlUtilities.handleSuccess(updatedOrderDto, 1L);
+    }
+
+
+    private void generateOrderPdf(OrderEntity order, UnifiedPaymentDto paymentDto, List<OrderItemEntity> orderItems) {
+        OrderPdfDto orderPdfDto = new OrderPdfDto();
+        String itemName = orderItems.stream()
+                .findFirst()
+                .map(OrderItemEntity::getName)
+                .orElse("Nombre no disponible");
+        orderPdfDto.setName(itemName);
+        orderPdfDto.setUnitPrice(order.getTotalPrice());
+        orderPdfDto.setOrderNumber(order.getOrderNumber());
+        orderPdfDto.setQuantity(order.getQuantity());
+        orderPdfDto.setTotalPrice(order.getTotalPrice());
+        PdfGenerator pdfGenerator = new PdfGenerator();
+        byte[] pdfBytes = pdfGenerator.generateOrderPdf(orderPdfDto);
+        try (FileOutputStream fos = new FileOutputStream("receipt.pdf")) {
+            fos.write(pdfBytes);
+            log.info("PDF receipt generated and saved successfully.");
+        } catch (IOException e) {
+            log.error("Error saving PDF receipt: " + e.getMessage());
+        }
+    }
+
+    @Override
+    @Scheduled(cron = "0 0 0 * * ?")
+    public ResponseEntity<String> deactivatePendingOrdersOlder() {
+        log.info("DEACTIVATING PENDING ORDERS OLDER THAN 1 HOUR BEGINS");
+        Date now = new Date();
+        Date limitDate = new Date(now.getTime() - (60 * 60 * 1000));
+        List<OrderEntity> pendingOrders = _orderConsultations.findAllByStatus("PENDING");
+        log.info("NO PENDING ORDERS FOUND");
+        if (pendingOrders.isEmpty()) return _errorControlUtilities.handleSuccess(null, 45L);
+        log.info("START DEACTIVATING PENDING ORDERS");
+        for (OrderEntity order : pendingOrders) {
+            if (order.getDateTimeCreation() != null && new Date(order.getDateTimeCreation()).before(limitDate)) {
+                log.info("CANCELING ORDER ID: " + order.getId());
+                order.setStatus("CANCELLED");
+                order.setUpdateUser("SYSTEM");
+                List<OrderItemEntity> orderItems = order.getItems();
+                for (OrderItemEntity item : orderItems) {
+                    _entriesServices.returnToStock(item.getProduct().getId(), item.getQuantity(), "SYSTEM");
+//                    Optional<InventoryEntity> inventoryEntityOpt = _inventoryConsultations.findById(item.getProductId());
+////                    if (inventoryEntityOpt.isPresent()) {
+////                        InventoryEntity inventory = inventoryEntityOpt.get();
+////                        inventory.setPendingStock(inventory.getPendingStock() - item.getQuantity());
+////                        _inventoryConsultations.updateData(inventory);
+////                    }
+                }
+                log.info("ORDER CANCELED" + order.getId());
+                _orderConsultations.updateData(order);
+            }
+        }
+        log.info("ALL PENDING ORDERS OLDER THAN 48 HOURS CANCELLED SUCCESSFULLY");
+        return _errorControlUtilities.handleSuccess(null, 1L);
+    }
+
+    public ResponseEntity<String> processPayment(UnifiedPaymentDto paymentDto) {
+        try {
+            ResponseEntity<?> response = _unifiedPaymentController.processPayment(paymentDto);
+            return (ResponseEntity<String>) response;
+        } catch (Exception e) {
+            return _errorControlUtilities.handleSuccess(null, 40L);
+        }
+    }
+
+
+
+
 
     /**
      * Converts an OrderEntity object to an OrderDto object.
@@ -132,25 +423,23 @@ public class OrderImpl implements IOrderService {
     private OrderDto parse(OrderEntity entity) {
         OrderDto orderDto = new OrderDto();
         orderDto.setId(entity.getId());
-        orderDto.setUserId(entity.getUserId());
-        orderDto.setTotalCost(entity.getTotalCost());
+        orderDto.setOrderNumber(entity.getOrderNumber());
+        orderDto.setUnitPrice(entity.getUnitPrice());
+        orderDto.setTotalPrice(entity.getTotalPrice());
         orderDto.setStatus(entity.getStatus());
         orderDto.setCreateUser(entity.getCreateUser());
         orderDto.setUpdateUser(entity.getUpdateUser());
-
-        // Convertir los items si existen
         if (entity.getItems() != null && !entity.getItems().isEmpty()) {
             List<OrderItemDto> itemDtos = entity.getItems().stream().map(itemEntity -> {
                 OrderItemDto itemDto = new OrderItemDto();
                 itemDto.setId(itemEntity.getId());
-                itemDto.setProductId(itemEntity.getProductId());
+                itemDto.setProductId(itemEntity.getProduct().getId());
                 itemDto.setQuantity(itemEntity.getQuantity());
                 itemDto.setPrice(itemEntity.getPrice());
                 return itemDto;
             }).toList();
             orderDto.setItems(itemDtos);
         }
-
         return orderDto;
     }
 
@@ -159,26 +448,28 @@ public class OrderImpl implements IOrderService {
      * Converts an OrderDto object to an OrderEntity object.
      *
      * @param dto The OrderDto object to be converted.
-     * @param entity The OrderEntity object to be updated.
+     * @param entities The OrderEntity object to be updated.
      * @return The updated OrderEntity object.
      */
-    private OrderEntity parseEnt(OrderDto dto, OrderEntity entity) {
+    private OrderEntity parseEnt(OrderDto dto, OrderEntity entities) {
+        OrderEntity entity = new OrderEntity();
         entity.setId(dto.getId());
-        entity.setUserId(dto.getUserId());
-        entity.setTotalCost(dto.getTotalCost());
+        entity.setOrderNumber(dto.getOrderNumber());
+        entity.setUnitPrice(dto.getUnitPrice());
+        entity.setTotalPrice(dto.getTotalPrice());
         entity.setStatus(dto.getStatus());
-        entity.setCreateUser(dto.getCreateUser());
-        entity.setUpdateUser(dto.getUpdateUser());
-
-        // Convertir los items si existen
+        entity.setCreateUser(entities.getCreateUser());
+        entity.setUpdateUser(entities.getUpdateUser());
+        entity.setDateTimeOrder(entities.getDateTimeOrder());
+        entity.setDateTimeCreation(entities.getDateTimeCreation());
+        entity.setDateTimeUpdate(entities.getDateTimeUpdate());
         if (dto.getItems() != null && !dto.getItems().isEmpty()) {
             List<OrderItemEntity> itemEntities = dto.getItems().stream().map(itemDto -> {
                 OrderItemEntity itemEntity = new OrderItemEntity();
                 itemEntity.setId(itemDto.getId());
-                itemEntity.setProductId(itemDto.getProductId());
+                itemEntity.setProduct(itemDto.getProduct());
                 itemEntity.setQuantity(itemDto.getQuantity());
                 itemEntity.setPrice(itemDto.getPrice());
-                itemEntity.setOrder(entity); // Establecer la relación con el pedido actual
                 return itemEntity;
             }).toList();
             entity.setItems(itemEntities);

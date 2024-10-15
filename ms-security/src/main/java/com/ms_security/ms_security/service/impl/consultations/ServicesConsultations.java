@@ -1,5 +1,6 @@
 package com.ms_security.ms_security.service.impl.consultations;
 
+import com.ms_security.ms_security.persistence.entity.InventoryEntity;
 import com.ms_security.ms_security.persistence.entity.ServicesEntity;
 import com.ms_security.ms_security.persistence.repository.IServicesRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,16 +35,22 @@ public class ServicesConsultations {
         return _servicesRepository.findAll(pageable);
     }
 
-    @CacheEvict(value = {"ServicesFindById","ServicesFindByAll", "ServicesFindByName"}, allEntries = true)
+    @CacheEvict(value = {"ServicesFindById","ServicesFindByAll", "ServicesFindByName", "ServicesFindByCode", "ServiceFindByCategoryId"}, allEntries = true)
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, rollbackFor = Exception.class)
     public ServicesEntity addNew(ServicesEntity entity) {
         return _servicesRepository.save(entity);
     }
 
-    @CacheEvict(value = {"ServicesFindById","ServicesFindByAll", "ServicesFindByName"}, allEntries = true)
+    @CacheEvict(value = {"ServicesFindById","ServicesFindByAll", "ServicesFindByName", "ServicesFindByCode", "ServiceFindByCodeAndCategoryId"}, allEntries = true)
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, rollbackFor = Exception.class)
     public ServicesEntity updateData(ServicesEntity entity) {
         return _servicesRepository.save(entity);
+    }
+
+    @Cacheable(value = "ServicesFindByCode", key = "#code")
+    @Transactional(readOnly = true)
+    public Optional<ServicesEntity> findByCode(Long code) {
+        return _servicesRepository.findByCode(code);
     }
 
     @Cacheable(value = "ServicesFindByName", key = "#name")
@@ -51,4 +58,24 @@ public class ServicesConsultations {
     public Optional<ServicesEntity> findByName(String name) {
         return _servicesRepository.findByName(name);
     }
+
+    @Cacheable(value = "ServiceFindByCategoryId", key = "#categoriId")
+    @Transactional(readOnly = true)
+    public Optional<ServicesEntity> findByCategoryId(Long categoriId) {
+        return _servicesRepository.findByCategoryId(categoriId);
+    }
+
+    @Cacheable(value = "ServiceFindByCodeAndCategoryId", key = "#code + '_' + #categoryId")
+    @Transactional(readOnly = true)
+    public Optional<ServicesEntity> findByCodeAndCategoryId(Long code,Long categoriId) {
+        return _servicesRepository.findByCodeAndCategoryId(code, categoriId);
+    }
+
+    @Cacheable(value = "ServicesFindByIdWithInventories", key = "#id")
+    @Transactional(readOnly = true)
+    public Optional<ServicesEntity> findByIdWithInventories(Long id) {
+        return _servicesRepository.findByIdWithInventories(id);
+    }
+
+
 }

@@ -59,4 +59,35 @@ public class CartController {
     public ResponseEntity<String> updateData(@RequestBody String entity) {
         return cartService.updateData(entity);
     }
+
+    @Operation(description = "ADD ITEM TO CART")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "SUCCESSFUL OPERATION", content = @Content(schema = @Schema(implementation = ResponseEntity.class))),
+            @ApiResponse(responseCode = "400", description = "GENERAL ERROR", content = @Content(schema = @Schema(implementation = ResponseEntity.class)))
+    })
+    @PostMapping(path = "/addToCart", produces = {"application/json"})
+    public ResponseEntity<String> addToCart(@RequestBody String entity) {
+        return cartService.addToCart(entity);
+    }
+
+    @Operation(description = "REMOVE ITEM FROM CART")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "SUCCESSFUL OPERATION", content = @Content(schema = @Schema(implementation = ResponseEntity.class))),
+            @ApiResponse(responseCode = "400", description = "GENERAL ERROR", content = @Content(schema = @Schema(implementation = ResponseEntity.class)))
+    })
+    @PostMapping(path = "/removeItem", produces = {"application/json"})
+    public ResponseEntity<String> removeItemFromCart(@RequestBody String entity) {
+        return cartService.removeItemFromCart(entity);
+    }
+
+    @Operation(description = "DELETE A CART")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "SUCCESSFUL OPERATION", content = @Content(schema = @Schema(implementation = ResponseEntity.class))),
+            @ApiResponse(responseCode = "400", description = "GENERAL ERROR", content = @Content(schema = @Schema(implementation = ResponseEntity.class)))
+    })
+    @PostMapping(path = "/deleteCart", produces = {"application/json"})
+    public ResponseEntity<String> deleteCart(@RequestBody String entity) {
+        return cartService.deleteCart(entity);
+    }
+
 }

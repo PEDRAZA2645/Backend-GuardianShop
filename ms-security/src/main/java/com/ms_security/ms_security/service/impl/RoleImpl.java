@@ -1,19 +1,21 @@
 package com.ms_security.ms_security.service.impl;
 
+import com.ms_security.ms_security.persistence.entity.ParametersEntity;
 import com.ms_security.ms_security.persistence.entity.PermissionEntity;
 import com.ms_security.ms_security.persistence.entity.RoleEntity;
+import com.ms_security.ms_security.service.IParametersService;
+import com.ms_security.ms_security.service.IRoleService;
 import com.ms_security.ms_security.service.impl.consultations.PermissionConsultations;
 import com.ms_security.ms_security.service.impl.consultations.RoleConsultations;
 import com.ms_security.ms_security.service.model.dto.FindByPageDto;
 import com.ms_security.ms_security.service.model.dto.RoleDto;
-import com.ms_security.ms_security.service.IRoleService;
 import com.ms_security.ms_security.utilities.EncoderUtilities;
 import com.ms_security.ms_security.utilities.ErrorControlUtilities;
-import com.ms_security.ms_security.utilities.PaginationUtilities;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,7 @@ public class RoleImpl implements IRoleService {
 
     private final RoleConsultations _roleConsultations;
     private final PermissionConsultations _permissionConsultations;
+    private final IParametersService _iParametersService;
     private final ErrorControlUtilities _errorControlUtilities;
 
     /**
@@ -62,24 +65,26 @@ public class RoleImpl implements IRoleService {
      */
     @Override
     public ResponseEntity<String> findAll(String encode) {
-        log.info("SEARCH FOR PAGES BEGINS");
         EncoderUtilities.validateBase64(encode);
+        log.info("INITIATING PAGINATED SEARCH");
         FindByPageDto request = EncoderUtilities.decodeRequest(encode, FindByPageDto.class);
         EncoderUtilities.validator(request);
         log.info(EncoderUtilities.formatJson(request));
-        Long pageSize = request.getSize() > 0 ?  request.getSize() : 10L;
-        Long pageId = request.getPage() > 0 ? request.getPage() : 1L;
-        String sortBy = "dateTimeCreation";
-        String direction = "asc";
-        Pageable pageable = PaginationUtilities.createPageable(pageId.intValue(), pageSize.intValue(), sortBy, direction);
+        log.info("INITIATING PARAMETER QUERY");
+        Optional<ParametersEntity> pageSizeParam = _iParametersService.findByCodeParameter(1L);
+        log.info("PARAMETER QUERY COMPLETED");
+        Pageable pageable = PageRequest.of(
+                request.getPage() - 1,
+                Integer.parseInt(pageSizeParam.get().getParameter()));
         Page<RoleEntity> pageResult = _roleConsultations.findAll(pageable);
         List<RoleDto> roleDto = pageResult.stream()
                 .map(this::parse)
                 .toList();
         PageImpl<RoleDto> response = new PageImpl<>(roleDto, pageable, pageResult.getTotalElements());
-        log.info("SEARCH FOR PAGINATED ITEMS IS OVER");
+        log.info("PAGINATED SEARCH COMPLETED");
         return _errorControlUtilities.handleSuccess(response, 1L);
     }
+
 
     /**
      * Responsible for creating a new record.

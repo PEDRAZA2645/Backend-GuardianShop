@@ -1,5 +1,6 @@
 package com.ms_security.ms_security.service.model.dto;
 
+import com.ms_security.ms_security.persistence.entity.InventoryEntity;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
@@ -17,8 +18,8 @@ public class OrderItemDto implements Serializable {
     @Min(value = 1, message = "The minimum value for id is 1")
     private Long id;
 
-    @NotNull(message = "The orderId field cannot be null", groups = {Create.class, Update.class})
-    private Long orderId;
+    @NotNull(message = "The name field cannot be null", groups = {Create.class, Update.class})
+    private String name;
 
     @NotNull(message = "The cartId field cannot be null", groups = {Create.class, Update.class})
     private Long cartId;
@@ -32,9 +33,6 @@ public class OrderItemDto implements Serializable {
     @NotNull(message = "The price field cannot be null", groups = {Create.class, Update.class})
     private BigDecimal price;
 
-    @NotNull(message = "The subtotal field cannot be null", groups = {Create.class, Update.class})
-    private BigDecimal subtotal;
-
     @NotNull(message = "The createUser field cannot be null", groups = Create.class)
     @Null(message = "The createUser field must be null", groups = Update.class)
     private String createUser;
@@ -43,6 +41,7 @@ public class OrderItemDto implements Serializable {
     @Null(message = "The updateUser field must be null", groups = Create.class)
     private String updateUser;
 
+    private InventoryEntity product;
 
     public interface Create {}
     public interface Update {}

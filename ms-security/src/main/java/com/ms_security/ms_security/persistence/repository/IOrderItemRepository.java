@@ -6,7 +6,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+import java.util.Optional;
+
 @Repository
 public interface IOrderItemRepository extends JpaRepository<OrderItemEntity, Long> {
-    Page<OrderItemEntity> findAll(Pageable pageable);
+//    Page<OrderItemEntity> findAll(Pageable pageable);
+    Optional<OrderItemEntity> findByProductIdAndCartId(Long productId, Long cartId);
+
+    List<OrderItemEntity> findByOrderId(Long orderId);
 }

@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -32,6 +33,11 @@ public class UserConsultations {
     @Transactional(readOnly = true)
     public Page<UserEntity> findAll(Pageable pageable) {
         return _iUserRepository.findAll(pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserEntity> findAll() {
+        return _iUserRepository.findAll();
     }
 
     @CacheEvict(value = {"UserFindById","UserFindByAll", "UserFindByUserName", "UserFindUserWithRolesById", "UserFindByEmail"}, allEntries = true)

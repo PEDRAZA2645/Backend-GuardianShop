@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/paypal")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
 public class PayPalController {
 
     private final IPaypalService _payPalService;

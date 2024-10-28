@@ -4,6 +4,7 @@ import com.ms_security.ms_security.persistence.entity.UserEntity;
 import com.ms_security.ms_security.service.model.dto.ChangePasswordDto;
 import com.ms_security.ms_security.service.model.dto.LoginDto;
 import com.ms_security.ms_security.service.model.dto.ResponseErrorDto;
+import org.springframework.http.ResponseEntity;
 
 import java.util.HashMap;
 
@@ -27,11 +28,11 @@ public interface IAuthServices {
     /**
      * Registers a new user in the system.
      *
-     * @param user the user entity containing registration details
+     * @param encode Base64 encoded string containing the new user details.
      * @return a ResponseErrorDto containing information about the registration result
      * @throws Exception if registration fails or an error occurs during the process
      */
-    ResponseErrorDto register(UserEntity user) throws Exception;
+    ResponseEntity<String> register(String encode);
 
     /**
      * Sends a password reset link to the user's email address.

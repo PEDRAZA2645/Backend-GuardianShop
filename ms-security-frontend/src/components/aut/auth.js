@@ -1,228 +1,168 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../utilities/ConfigAxios';
+import React, { useState } from 'react';
+import axios from 'axios';
 
-const Auth = () => {
-    const [isLogin, setIsLogin] = useState(true);
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [newPassword, setNewPassword] = useState(''); // Nuevo password
-    const [token, setToken] = useState(''); // Token para restablecer contraseña
-    const [errorMessage, setErrorMessage] = useState('');
-    const [successMessage, setSuccessMessage] = useState('');
-    const navigate = useNavigate();
+const AuthComponent = () => {
+    const [form, setForm] = useState('login');
+    const [formData, setFormData] = useState({
+        email: '',
+        password: '',
+        confirmPassword: '',
+        token: ''
+    });
+    const [message, setMessage] = useState('');
+    const [jwtToken, setJwtToken] = useState(null);
 
-    useEffect(() => {
-        const storedToken = localStorage.getItem('token');
-        if (storedToken) {
-            navigate('/services'); // Redirigir a la página de servicios si hay un token
-        }
-    }, [navigate]);
-
-    const handleLogin = async (e) => {
-        e.preventDefault();
-
-        try {
-            const response = await api.post('/auth/login', {
-                email,
-                password,
-            });
-
-            console.log(response.data); // Verificar la respuesta completa
-
-            if (response.status === 200) {
-                // Almacenar el token de autenticación
-                localStorage.setItem('token', response.data.jwt);
-                console.log("Token almacenado:", response.data.jwt); // Verificar que se almacena
-                setSuccessMessage("Inicio de sesión exitoso.");
-                setErrorMessage('');
-                navigate('/services'); // Redirigir a la página de servicios
-            }
-        } catch (error) {
-            console.error("Error de inicio de sesión:", error); // Log de errores
-            if (error.response && error.response.data) {
-                setErrorMessage(error.response.data.message || "Error al iniciar sesión.");
-            } else {
-                setErrorMessage("Error de red. Inténtalo de nuevo.");
-            }
-            setSuccessMessage('');
-        }
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
     };
 
-    const handleRegister = async (e) => {
-        e.preventDefault();
-
-        try {
-            const response = await api.post('/auth/register', {
-                name,
-                email,
-                password,
-            });
-
-            if (response.status === 201) {
-                setSuccessMessage("Usuario registrado con éxito. Puedes iniciar sesión ahora.");
-                setErrorMessage('');
-                setIsLogin(true); // Cambiar a la vista de inicio de sesión
-            }
-        } catch (error) {
-            if (error.response && error.response.data) {
-                setErrorMessage(error.response.data.message || "Error al registrar el usuario.");
-            } else {
-                setErrorMessage("Error de red. Inténtalo de nuevo.");
-            }
-            setSuccessMessage('');
-        }
-    };
-
-    const handlePasswordResetRequest = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await api.post('/auth/reset-password', null, {
-                params: { email }, // Envío del email
-            });
-            setSuccessMessage("Se ha enviado un correo para restablecer la contraseña.");
-            setErrorMessage('');
-        } catch (error) {
-            if (error.response && error.response.data) {
-                setErrorMessage(error.response.data.message || "Error al enviar el correo.");
-            } else {
-                setErrorMessage("Error de red. Inténtalo de nuevo.");
-            }
-        }
-    };
+            let response;
 
-    const handleChangePassword = async (e) => {
-        e.preventDefault();
-        try {
-            await api.post('/auth/change-password', {
-                token,
-                newPassword, // El nuevo password
-            });
-            setSuccessMessage("Contraseña cambiada exitosamente.");
-            setErrorMessage('');
-            setNewPassword(''); // Limpiar el campo del nuevo password
-            setToken(''); // Limpiar el token
-            setIsLogin(true); // Volver a la vista de inicio de sesión
-        } catch (error) {
-            if (error.response && error.response.data) {
-                setErrorMessage(error.response.data.message || "Error al cambiar la contraseña.");
-            } else {
-                setErrorMessage("Error de red. Inténtalo de nuevo.");
+            switch (form) {
+                case 'login':
+                    response = await axios.post('http://localhost:8082/auth/login', {
+                        email: formData.email,
+                        password: formData.password
+                    });
+                    setJwtToken(response.data.jwt);
+                    setMessage('Login successful!');
+                    break;
+                
+                case 'register':
+                    response = await axios.post('http://localhost:8082/auth/register', {
+                        email: formData.email,
+                        password: formData.password,
+                        // otros datos necesarios para el registro
+                    });
+                    setMessage(response.data.message || 'Registration successful!');
+                    break;
+
+                case 'reset-password':
+                    response = await axios.post('http://localhost:8082/auth/reset-password', null, {
+                        params: { email: formData.email }
+                    });
+                    setMessage(response.data || 'Password reset email sent.');
+                    break;
+
+                case 'change-password':
+                    response = await axios.post('http://localhost:8082/auth/change-password', {
+                        newPassword: formData.password,
+                        token: formData.token
+                    });
+                    setMessage(response.data || 'Password changed successfully!');
+                    break;
+
+                default:
+                    break;
             }
+        } catch (error) {
+            setMessage(error.response?.data?.message || 'An error occurred');
         }
     };
 
     const handleLogout = async () => {
         try {
-            const token = localStorage.getItem('token');
-            await api.post('/auth/logout', {}, {
-                headers: {
-                    Authorization: `Bearer ${token}`
+            await axios.post(
+                'http://localhost:8082/auth/logout',
+                {},
+                {
+                    headers: { Authorization: `Bearer ${jwtToken}` }
                 }
-            });
-            localStorage.removeItem('token');
-
-            // Redirige a la página de inicio o donde desees
-            navigate('/services');
-            
-            // Muestra un mensaje de éxito
-            setSuccessMessage("Has cerrado sesión exitosamente.");
-            setErrorMessage('');
+            );
+            setJwtToken(null);
+            setMessage('Logged out successfully!');
         } catch (error) {
-            // Maneja el error si ocurre
-            if (error.response && error.response.data) {
-                setErrorMessage(error.response.data.message || "Error al cerrar sesión.");
-            } else {
-                setErrorMessage("Error de red. Inténtalo de nuevo.");
-            }
-            setSuccessMessage('');
+            setMessage(error.response?.data?.message || 'Logout failed');
         }
     };
-    
 
     return (
         <div>
-            <h2>{isLogin ? "Inicio de Sesión" : "Registro de Usuario"}</h2>
-            <form onSubmit={isLogin ? handleLogin : handleRegister}>
-                {!isLogin && (
-                    <div>
-                        <label>Nombre:</label>
-                        <input
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            required={!isLogin}
-                        />
-                    </div>
-                )}
-                <div>
-                    <label>Email:</label>
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
-                </div>
-                <div>
-                    <label>Contraseña:</label>
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
-                </div>
-                <button type="submit">{isLogin ? "Iniciar Sesión" : "Registrar"}</button>
-            </form>
-            {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
-            {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}
-            <button onClick={() => setIsLogin(!isLogin)}>
-                {isLogin ? "¿No tienes una cuenta? Regístrate" : "¿Ya tienes una cuenta? Inicia sesión"}
-            </button>
+            <h2>Authentication</h2>
+            <div>
+                <button onClick={() => setForm('login')}>Login</button>
+                <button onClick={() => setForm('register')}>Register</button>
+                <button onClick={() => setForm('reset-password')}>Reset Password</button>
+                <button onClick={() => setForm('change-password')}>Change Password</button>
+            </div>
 
-            {/* Sección para restablecimiento de contraseña */}
-            {!isLogin && (
-                <div>
-                    <h2>Restablecer Contraseña</h2>
-                    <form onSubmit={handlePasswordResetRequest}>
+            {jwtToken && <button onClick={handleLogout}>Logout</button>}
+
+            <form onSubmit={handleSubmit}>
+                {(form === 'login' || form === 'register') && (
+                    <>
                         <input
                             type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                            placeholder="Ingresa tu correo"
-                        />
-                        <button type="submit">Enviar correo para restablecer contraseña</button>
-                    </form>
-
-                    <form onSubmit={handleChangePassword}>
-                        <input
-                            type="text"
-                            placeholder="Token"
-                            value={token}
-                            onChange={(e) => setToken(e.target.value)}
+                            name="email"
+                            placeholder="Email"
+                            value={formData.email}
+                            onChange={handleInputChange}
                             required
                         />
                         <input
                             type="password"
-                            placeholder="Nueva Contraseña"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
+                            name="password"
+                            placeholder="Password"
+                            value={formData.password}
+                            onChange={handleInputChange}
                             required
                         />
-                        <button type="submit">Cambiar Contraseña</button>
-                    </form>
-                    {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}
-                    {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
-                </div>
-            )}
+                    </>
+                )}
 
-            {/* Botón de cierre de sesión */}
-            <button onClick={handleLogout} style={{ marginTop: '20px' }}>Cerrar Sesión</button>
+                {form === 'register' && (
+                    <input
+                        type="password"
+                        name="confirmPassword"
+                        placeholder="Confirm Password"
+                        value={formData.confirmPassword}
+                        onChange={handleInputChange}
+                        required
+                    />
+                )}
+
+                {form === 'reset-password' && (
+                    <input
+                        type="email"
+                        name="email"
+                        placeholder="Email for password reset"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        required
+                    />
+                )}
+
+                {form === 'change-password' && (
+                    <>
+                        <input
+                            type="password"
+                            name="password"
+                            placeholder="New Password"
+                            value={formData.password}
+                            onChange={handleInputChange}
+                            required
+                        />
+                        <input
+                            type="text"
+                            name="token"
+                            placeholder="Token"
+                            value={formData.token}
+                            onChange={handleInputChange}
+                            required
+                        />
+                    </>
+                )}
+
+                <button type="submit">{form === 'login' ? 'Login' : 'Submit'}</button>
+            </form>
+
+            {message && <p>{message}</p>}
         </div>
     );
 };
 
-export default Auth;
+export default AuthComponent;

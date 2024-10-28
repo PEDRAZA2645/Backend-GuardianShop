@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Route, Routes, useNavigate } from 'react-router-dom';
-import Login from './components/aut/auth'; 
+import AuthComponent from './components/aut/auth';
 import UnifiedPayment from './components/payment-gateway/UnifiedPayment';
 import ServicesComponent from './components/services/Product';
 import CartComponent from './components/cart/CartComponent';
@@ -81,13 +81,13 @@ const App = () => {
         <div className="App">
             <h1>Payment Integration Demo</h1>
             <Routes>
-                <Route path="/auth" element={<Login />} />
+                <Route path="/auth" element={<AuthComponent />} />
                 <Route path="/payment" element={<UnifiedPayment />} />
                 <Route path="/services" element={<ServicesComponent onAddToCart={addToCart} />} />
                 <Route path="/carts" element={<CartComponent cartItems={cartItems} />} />
                 <Route path="/carts/list/all" element={<CartComponent cartItems={cartItems} />} />
                 <Route path="/carts/removeItem/:itemId" element={<CartComponent cartItems={cartItems} />} />
-                <Route path="/" element={<Login />} />
+                <Route path="/" element={<ServicesComponent />} />
             </Routes>
         </div>
     );

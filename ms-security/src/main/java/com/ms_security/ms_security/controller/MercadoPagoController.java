@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/mercadopago")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
 public class MercadoPagoController {
 
     private final IMercadoPagoService mercadoPagoService;

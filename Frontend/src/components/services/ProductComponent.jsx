@@ -7,16 +7,6 @@ const ProductComponent = ({ onAddToCart }) => {
   const [services, setServices] = useState([]);
   const [error, setError] = useState(null);
   const [showCart, setShowCart] = useState(false); // Estado para controlar la visualización del carrito
-  const [formData, setFormData] = useState({
-    name: '',
-    lastName: '',
-    userName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
-  const [message, setMessage] = useState('');
-  const [passwordsMatch, setPasswordsMatch] = useState(true);
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -51,28 +41,7 @@ const ProductComponent = ({ onAddToCart }) => {
   }, []);
 
   const handleCartIconClick = () => {
-    setShowCart((prev) => !prev); // Alternar la visibilidad del carrito
-  };
-
-  // Maneja los cambios en los campos de entrada
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({ ...prevData, [name]: value }));
-  };
-
-  // Función para validar si las contraseñas coinciden
-  const validatePasswords = () => {
-    setPasswordsMatch(formData.password === formData.confirmPassword);
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!passwordsMatch) {
-      setMessage('Las contraseñas no coinciden.');
-      return;
-    }
-    // Aquí puedes manejar el registro o el envío de datos del formulario
-    setMessage('Formulario enviado con éxito!'); // Simulación de envío
+    setShowCart(prev => !prev); // Alternar la visibilidad del carrito
   };
 
   return (
@@ -116,66 +85,6 @@ const ProductComponent = ({ onAddToCart }) => {
       </div>
 
       {showCart && <CartComponent />} {/* Mostrar el carrito si showCart es true */}
-
-      <form onSubmit={handleSubmit} className="auth-form" style={{ marginTop: '20px' }}>
-        <input
-          type="text"
-          name="name"
-          placeholder="Nombre"
-          value={formData.name}
-          onChange={handleInputChange}
-          required
-        />
-        <input
-          type="text"
-          name="lastName"
-          placeholder="Apellido"
-          value={formData.lastName}
-          onChange={handleInputChange}
-          required
-        />
-        <input
-          type="text"
-          name="userName"
-          placeholder="Nombre de usuario"
-          value={formData.userName}
-          onChange={handleInputChange}
-          required
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="Correo electrónico"
-          value={formData.email}
-          onChange={handleInputChange}
-          required
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Contraseña"
-          value={formData.password}
-          onChange={handleInputChange}
-          onBlur={validatePasswords}
-          required
-        />
-        <input
-          type="password"
-          name="confirmPassword"
-          placeholder="Confirmar contraseña"
-          value={formData.confirmPassword}
-          onChange={handleInputChange}
-          onBlur={validatePasswords}
-          required
-        />
-        {!passwordsMatch && <p style={{ color: 'red' }}>Las contraseñas no coinciden!</p>}
-
-        <button type="submit" className="auth-button">
-          Enviar
-        </button>
-      </form>
-
-      {message && <p>{message}</p>}
     </div>
   );
 };

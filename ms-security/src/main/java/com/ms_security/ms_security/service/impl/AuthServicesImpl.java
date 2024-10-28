@@ -177,7 +177,6 @@ public class AuthServicesImpl implements IAuthServices {
     public void changePassword(ChangePasswordDto changePasswordDto) throws Exception {
         Optional<UserEntity> user = getUserFromToken(changePasswordDto.getToken());
         if (user.isPresent()) {
-            if (!verifyPassword(changePasswordDto.getCurrentPassword(), user.get().getPassword())) throw new Exception("Current password is incorrect");
             BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
             user.get().setPassword(encoder.encode(changePasswordDto.getNewPassword()));
             _userConsultations.updateData(user.get());

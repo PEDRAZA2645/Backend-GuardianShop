@@ -9,107 +9,67 @@ const AuthComponent = ({ mode }) => {
     const query = new URLSearchParams(location.search);
     const tokenFromQuery = query.get('token');
 
-    // Estado para almacenar los datos del formulario
     const [formData, setFormData] = useState({
         name: '',
         lastName: '',
         email: '',
         userName: '',
         status: 1,
-        currentPassword: '',
-        password: '',
+        newPassword: '',
         confirmPassword: '',
         token: tokenFromQuery || '',
     });
-
-    // Estado para mensajes y validación de contraseñas
+    
     const [message, setMessage] = useState('');
     const [passwordsMatch, setPasswordsMatch] = useState(true);
 
-    // Maneja los cambios en los campos de entrada
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData((prevData) => ({ ...prevData, [name]: value }));
     };
 
-    // Función para validar si las contraseñas coinciden
     const validatePasswords = () => {
-        if ((mode === 'change-password' || mode === 'register') && formData.password !== formData.confirmPassword) {
+        if ((mode === 'change-password' || mode === 'register') && formData.newPassword !== formData.confirmPassword) {
             setPasswordsMatch(false);
         } else {
             setPasswordsMatch(true);
         }
     };
 
-    // Maneja el envío del formulario
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             let response;
 
-            // Verifica si las contraseñas coinciden antes de proceder
             if (!passwordsMatch) {
                 setMessage('Passwords do not match!');
                 return;
             }
 
-            console.log('Datos a enviar:', {
-                name: formData.name,
-                lastName: formData.lastName,
-                userName: formData.userName,
-                email: formData.email,
-                password: formData.password,
-                status: formData.status ? 1 : 0,
-            });
-
             switch (mode) {
                 case 'login':
-                    // Maneja la lógica de inicio de sesión
                     response = await axios.post('http://localhost:8082/auth/login', {
                         email: formData.email,
-                        password: formData.currentPassword,
+                        password: formData.newPassword, // Cambiado para usar newPassword
                     });
                     setMessage('Login successful!');
-                    navigate('/');
+                    navigate('/dashboard');
                     break;
 
-                case 'register': {
-                    // Datos de registro para el backend
-                    const registerData = {
-                        id: null,
+                case 'register':
+                    response = await axios.post('http://localhost:8082/auth/register', {
                         name: formData.name,
                         lastName: formData.lastName,
                         userName: formData.userName,
                         email: formData.email,
-                        password: formData.password,
-                        status: true,
-                        createUser: formData.name,
-                        updateUser: null,
-                        rolesToAdd: null,
-                        roles: [],
-                    };
-
-                    // Codificación a Base64
-                    const jsonString = JSON.stringify(registerData);
-                    const encodedRegisterData = btoa(unescape(encodeURIComponent(jsonString)));
-                    console.log('Encoded Register Data (Base64):', encodedRegisterData);
-
-                    // Envío de datos al servidor
-                    response = await axios.post('http://localhost:8082/auth/register', {
-                        data: encodedRegisterData,
-                    }, {
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
+                        password: formData.newPassword,
+                        status: formData.status,
                     });
-
                     setMessage(response.data.message || 'Registration successful!');
                     navigate('/login');
                     break;
-                }
 
                 case 'reset-password':
-                    // Maneja la lógica para restablecer la contraseña
                     response = await axios.post('http://localhost:8082/auth/reset-password', {
                         email: formData.email,
                     });
@@ -117,10 +77,8 @@ const AuthComponent = ({ mode }) => {
                     break;
 
                 case 'change-password':
-                    // Maneja la lógica para cambiar la contraseña
                     response = await axios.post('http://localhost:8082/auth/change-password', {
-                        currentPassword: formData.currentPassword,
-                        newPassword: formData.password,
+                        newPassword: formData.newPassword,
                         token: formData.token,
                     });
                     setMessage(response.data.message || 'Password changed successfully!');
@@ -131,8 +89,6 @@ const AuthComponent = ({ mode }) => {
                     break;
             }
         } catch (error) {
-            // Manejo de errores
-            console.error('Error details:', error);
             setMessage(error.response?.data?.message || 'An error occurred');
         }
     };
@@ -158,9 +114,9 @@ const AuthComponent = ({ mode }) => {
                 {mode === 'login' && (
                     <input
                         type="password"
-                        name="currentPassword"
+                        name="newPassword" // Cambiado de currentPassword a newPassword
                         placeholder="Password"
-                        value={formData.currentPassword}
+                        value={formData.newPassword}
                         onChange={handleInputChange}
                         onPaste={(e) => e.preventDefault()}
                         required
@@ -170,18 +126,9 @@ const AuthComponent = ({ mode }) => {
                     <>
                         <input
                             type="password"
-                            name="currentPassword"
-                            placeholder="Current Password"
-                            value={formData.currentPassword}
-                            onChange={handleInputChange}
-                            onPaste={(e) => e.preventDefault()}
-                            required
-                        />
-                        <input
-                            type="password"
                             name="newPassword"
                             placeholder="New Password"
-                            value={formData.password}
+                            value={formData.newPassword}
                             onChange={handleInputChange}
                             onBlur={validatePasswords}
                             onPaste={(e) => e.preventDefault()}
@@ -199,7 +146,7 @@ const AuthComponent = ({ mode }) => {
                         />
                     </>
                 )}
-                {/* {mode === 'register' && (
+                {mode === 'register' && (
                     <>
                         <input
                             type="text"
@@ -227,9 +174,9 @@ const AuthComponent = ({ mode }) => {
                         />
                         <input
                             type="password"
-                            name="password"
+                            name="newPassword"
                             placeholder="Password"
-                            value={formData.password}
+                            value={formData.newPassword}
                             onChange={handleInputChange}
                             onBlur={validatePasswords}
                             required
@@ -244,7 +191,7 @@ const AuthComponent = ({ mode }) => {
                             required
                         />
                     </>
-                )} */}
+                )}
                 {!passwordsMatch && <p style={{ color: 'red' }}>Passwords do not match!</p>}
                 
                 <button type="submit" className="auth-button">

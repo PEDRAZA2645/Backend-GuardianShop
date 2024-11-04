@@ -26,7 +26,8 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 .env
-EnvironmentVariables.env
+environment/EnvironmentVariables.env
+
 
 
 ### NetBeans ###

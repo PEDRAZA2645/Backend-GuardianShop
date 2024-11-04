@@ -34,16 +34,22 @@ dependencies {
 	implementation 'commons-codec:commons-codec:1.16.0'
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:2.15.2'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation("org.springframework.boot:spring-boot-starter-thymeleaf:3.3.5")
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-
-	//Swagger
+	implementation 'com.stripe:stripe-java:26.12.0'
+	implementation 'com.paypal.sdk:rest-api-sdk:1.14.0'
+	implementation group: 'com.mercadopago', name: 'sdk-java', version: '1.11.0'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
+	implementation group: 'org.json', name: 'json', version: '20240303'
+	implementation("com.itextpdf:itext7-core:8.0.5")
+//	implementation("org.thymeleaf:thymeleaf-spring5:3.1.2.RELEASE")
+
+
 }
 
 tasks.named('test') {

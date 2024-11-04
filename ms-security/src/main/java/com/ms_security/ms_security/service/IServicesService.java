@@ -2,6 +2,8 @@ package com.ms_security.ms_security.service;
 
 import org.springframework.http.ResponseEntity;
 
+import java.math.BigDecimal;
+
 /**
  * Interface for managing services.
  * Provides methods for retrieving, adding, and updating services.
@@ -39,4 +41,6 @@ public interface IServicesService {
      * @return a ResponseEntity indicating the success or failure of the update
      */
     ResponseEntity<String> updateData(String encode);
+
+    void updateServiceSalePrice(Long productId, BigDecimal newPrice);
 }

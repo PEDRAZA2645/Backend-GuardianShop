@@ -23,7 +23,7 @@ import java.util.List;
 @Service
 public class ErrorImpl implements IErrorService {
 
-    @Value("${extrenal.url-api-container}")
+    @Value("${external.url-api-container}")
     private String apiUrl;
 
     private final RestTemplate restTemplate;

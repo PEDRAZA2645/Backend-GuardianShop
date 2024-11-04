@@ -1,5 +1,6 @@
 package com.ms_security.ms_security.service;
 
+import com.ms_security.ms_security.persistence.entity.PermissionEntity;
 import com.ms_security.ms_security.persistence.entity.RoleEntity;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.JWTClaimsSet;
@@ -28,7 +29,7 @@ public interface IJWTUtilityService {
      * @throws InvalidKeySpecException if the key specification is invalid
      * @throws JOSEException if there is an error creating or signing the JWT
      */
-    public String generateJWT(Long userId, Set<RoleEntity> roles, Set<String> permissions) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException;
+    public String generateJWT(Long userId, Set<RoleEntity> roles, Set<PermissionEntity> permissions, long expirationTime) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException;
 
     /**
      * Parses and validates a JWT.
@@ -42,4 +43,16 @@ public interface IJWTUtilityService {
      * @throws InvalidKeySpecException if the key specification is invalid
      */
     JWTClaimsSet parseJWT(String jwt) throws ParseException, JOSEException, IOException, NoSuchAlgorithmException, InvalidKeySpecException;
+
+    /**
+     * Validates the given JWT token.
+     *
+     * @param token the JWT token to be validated
+     * @return true if the token is valid; false otherwise
+     * @throws JOSEException if there is an error verifying the token
+     * @throws IOException if there is an error reading the public key file
+     * @throws NoSuchAlgorithmException if RSA algorithm is not available
+     * @throws InvalidKeySpecException if the public key specification is invalid
+     */
+    boolean validateToken(String token) throws JOSEException, IOException, NoSuchAlgorithmException, InvalidKeySpecException;
 }

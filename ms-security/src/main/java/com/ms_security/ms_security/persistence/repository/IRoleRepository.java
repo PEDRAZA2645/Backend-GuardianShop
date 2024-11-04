@@ -16,4 +16,7 @@ public interface IRoleRepository extends JpaRepository<RoleEntity, Long> {
     Optional<RoleEntity> findByName(String name);
     @Query("SELECT r FROM RoleEntity r LEFT JOIN FETCH r.permissions WHERE r.id = :roleId")
     Optional<RoleEntity> findRoleWithPermissionById(@Param("roleId") Long roleId);
+    @Query("SELECT r FROM RoleEntity r LEFT JOIN FETCH r.permissions WHERE r.name = :roleName")
+    Optional<RoleEntity> findByNameWithPermissions(@Param("roleName") String name);
+
 }

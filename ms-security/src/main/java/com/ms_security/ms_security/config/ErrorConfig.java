@@ -34,14 +34,17 @@ public class ErrorConfig {
      * @throws Exception if there is an issue with encoding or decoding error details
      */
     @PostConstruct
-    public void init() throws Exception {
-        List<ErrorResponseDto> allErrors = errorService.findAllErrors();
-        String erroresString = EncoderUtilities.encodeResponse(allErrors);
-        errorResponseDtos = objectMapper.readValue(
-                EncoderUtilities.base64Decode(erroresString),
-                new TypeReference<List<ErrorResponseDto>>() {}
-        );
-        log.info("Errores cargados: {}", errorResponseDtos);
+    public void init() {
+        try {
+            List<ErrorResponseDto> allErrors = errorService.findAllErrors();
+            String erroresString = EncoderUtilities.encodeResponse(allErrors);
+            errorResponseDtos = objectMapper.readValue(
+                    EncoderUtilities.base64Decode(erroresString),
+                    new TypeReference<List<ErrorResponseDto>>() {}
+            );
+            log.info("Errores cargados: {}", errorResponseDtos);
+        } catch (Exception e) {
+            log.error("Error al cargar los detalles de error: {}", e.getMessage(), e);
+        }
     }
-
 }

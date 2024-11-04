@@ -28,7 +28,6 @@ out/
 .env
 environment/EnvironmentVariables.env
 
-
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/

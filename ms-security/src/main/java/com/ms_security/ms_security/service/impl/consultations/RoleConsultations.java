@@ -57,4 +57,8 @@ public class RoleConsultations {
     public Optional<RoleEntity> findRoleWithPermissionById(Long roleId) {
         return _iRoleRepository.findRoleWithPermissionById(roleId);
     }
+    public Optional<RoleEntity> findByNameWithPermissions(String name) {
+        return _iRoleRepository.findByNameWithPermissions(name);
+    }
+
 }

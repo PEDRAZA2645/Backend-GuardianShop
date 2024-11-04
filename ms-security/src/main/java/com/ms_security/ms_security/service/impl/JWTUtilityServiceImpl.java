@@ -1,5 +1,6 @@
 package com.ms_security.ms_security.service.impl;
 
+import com.ms_security.ms_security.persistence.entity.PermissionEntity;
 import com.ms_security.ms_security.persistence.entity.RoleEntity;
 import com.ms_security.ms_security.service.IJWTUtilityService;
 import com.nimbusds.jose.*;
@@ -54,7 +55,7 @@ public class JWTUtilityServiceImpl implements IJWTUtilityService {
      * @throws JOSEException if there is an error generating the JWT
      */
     @Override
-    public String generateJWT(Long userId, Set<RoleEntity> roles, Set<String> permissions) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException {
+    public String generateJWT(Long userId, Set<RoleEntity> roles, Set<PermissionEntity> permissions, long expirationTime) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException {
         PrivateKey privateKey = loadPrivateKey(privateKeyResource);
 
         JWSSigner signer = new RSASSASigner(privateKey);
@@ -63,9 +64,9 @@ public class JWTUtilityServiceImpl implements IJWTUtilityService {
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
                 .subject(userId.toString())
                 .issueTime(now)
-                .expirationTime(new Date(now.getTime() + 14400000)) // 4 hours expiration
+                .expirationTime(new Date(now.getTime() + expirationTime)) // Usa el tiempo de expiración pasado como argumento
                 .claim("roles", roles.stream().map(RoleEntity::getName).toList())
-                .claim("permissions", permissions)
+                .claim("permissions", permissions.stream().map(PermissionEntity::getUrl).toList())
                 .build();
 
         SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.RS256), claimsSet);
@@ -73,6 +74,8 @@ public class JWTUtilityServiceImpl implements IJWTUtilityService {
 
         return signedJWT.serialize();
     }
+
+
 
 
     /**
@@ -146,4 +149,26 @@ public class JWTUtilityServiceImpl implements IJWTUtilityService {
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
         return keyFactory.generatePublic(new X509EncodedKeySpec(decodedKey));
     }
+
+    /**
+     * Validates the given JWT token.
+     *
+     * @param token the JWT token to be validated
+     * @return true if the token is valid; false otherwise
+     * @throws JOSEException if there is an error verifying the token
+     * @throws IOException if there is an error reading the public key file
+     * @throws NoSuchAlgorithmException if RSA algorithm is not available
+     * @throws InvalidKeySpecException if the public key specification is invalid
+     */
+    public boolean validateToken(String token) throws JOSEException, IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+        try {
+            // Parse the token to verify its signature and claims
+            parseJWT(token);
+            return true; // If no exception is thrown, the token is valid
+        } catch (JOSEException | ParseException e) {
+            // Log the error if needed, e.g., logger.error("Token validation failed: {}", e.getMessage());
+            return false; // Token is invalid
+        }
+    }
+
 }

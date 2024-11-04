@@ -39,11 +39,14 @@ public class EmailImpl implements IEmailService {
             helper.setSubject(email.getSubject());
             Context context = new Context();
             context.setVariable("message", email.getMessage());
+            context.setVariable("resetLink", email.getResetLink());
             String contentHTML = templateEngine.process("email", context);
             helper.setText(contentHTML, true);
             javaMailSender.send(message);
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new RuntimeException("Error Sending Email: " + e.getMessage(), e);
         }
     }
+
+
 }

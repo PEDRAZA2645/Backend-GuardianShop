@@ -1,0 +1,24 @@
+server:
+  port: ${PORT}
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  doc:
+    swagger-ui:
+      disable-swagger-default-url: true
+      path: /swagger
+  datasource:
+    url: ENC(${URL_DB})
+    username: ENC(${USERNAME_DB})
+    password: ENC(${PSS})
+    driver-class-name: ${DRIVE}
+
+jasypt:
+  encryptor:
+    algorithm: PBEWithMD5AndDES
+    iv-generator-classname: org.jasypt.iv.NoIvGenerator
+    password: ${JASYPT_ENCRYPTOR}
+

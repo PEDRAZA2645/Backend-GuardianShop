@@ -15,6 +15,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
  * Security configuration for the application.
@@ -28,23 +30,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * </ul>
  * </p>
  *
- * <p>
- * The configuration performs the following actions:
- * <ul>
- *     <li>Disables CSRF protection.</li>
- *     <li>Configures authorization rules where:
- *         <ul>
- *             <li>Routes starting with "/auth/**", "/form/**", and "/services/**" are allowed without authentication.</li>
- *             <li>Routes starting with "/permission/**", "/role/**", and "/users/**" require the "ADMIN" role.</li>
- *             <li>All other requests must be authenticated.</li>
- *         </ul>
- *     </li>
- *     <li>Configures session management policy to be stateless.</li>
- *     <li>Adds the JWT authorization filter before the user authentication filter.</li>
- *     <li>Configures exception handling for unauthorized authentication responses.</li>
- * </ul>
- * </p>
- *
  * @see JWTAuthorizationFilter
  * @see IJWTUtilityService
  */
@@ -55,6 +40,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final IJWTUtilityService _jwtUtilityService;
+    private final RoleConsultations _roleConsultations;
+    private final PermissionConsultations _permissionConsultations;
 
     /**
      * Configures the security filter chain for HTTP.
@@ -65,11 +52,24 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        JWTAuthorizationFilter jwtAuthorizationFilter = new JWTAuthorizationFilter(
+                _jwtUtilityService,
+                _roleConsultations,
+                _permissionConsultations
+        );
+        CorsConfiguration corsConfiguration = new CorsConfiguration();
+        corsConfiguration.addAllowedOrigin("http://localhost:5173");
+        corsConfiguration.addAllowedMethod("*");
+        corsConfiguration.addAllowedHeader("*");
+        corsConfiguration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", corsConfiguration);
         return http
                 .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(source))
                 .authorizeHttpRequests(authRequests ->
                         authRequests
-                                .requestMatchers("/auth/**", "/form/**", "/services/**").permitAll()
+                                .requestMatchers("/auth/**", "/form/list/id", "/form/list/all", "/services/list/all").permitAll()
                                 .requestMatchers("/permission/**", "/role/**", "/users/**")
                                 .hasRole("ADMIN")
                                 .anyRequest().authenticated()
@@ -77,8 +77,7 @@ public class SecurityConfig {
                 .sessionManagement(sessionManagement ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .addFilterBefore(new JWTAuthorizationFilter(_jwtUtilityService),
-                        UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exceptionHandling ->
                         exceptionHandling.authenticationEntryPoint((request, response, authException) -> {
                             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");

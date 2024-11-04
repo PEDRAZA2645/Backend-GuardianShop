@@ -1,24 +1,25 @@
 package com.ms_security.ms_security.service.impl;
 
 import com.ms_security.ms_security.persistence.entity.ContactFormEntity;
+import com.ms_security.ms_security.persistence.entity.ParametersEntity;
+import com.ms_security.ms_security.service.IContactFormService;
+import com.ms_security.ms_security.service.IEmailService;
+import com.ms_security.ms_security.service.IParametersService;
 import com.ms_security.ms_security.service.impl.consultations.ContactFormConsultations;
 import com.ms_security.ms_security.service.model.dto.ContactFormDto;
+import com.ms_security.ms_security.service.model.dto.EmailDto;
 import com.ms_security.ms_security.service.model.dto.FindByPageDto;
-import com.ms_security.ms_security.service.IContactFormService;
 import com.ms_security.ms_security.utilities.EncoderUtilities;
 import com.ms_security.ms_security.utilities.ErrorControlUtilities;
-import com.ms_security.ms_security.utilities.PaginationUtilities;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import com.ms_security.ms_security.service.IEmailService;
-import com.ms_security.ms_security.service.model.dto.EmailDto;
-import jakarta.mail.MessagingException;
-
 
 import java.util.Date;
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.Optional;
 public class ContactFormImpl implements IContactFormService {
 
     private final ContactFormConsultations _contactFormConsultations;
+    private final IParametersService _iParametersService;
     private final ErrorControlUtilities _errorControlUtilities;
     private final IEmailService _iEmailService;
     /**
@@ -61,24 +63,26 @@ public class ContactFormImpl implements IContactFormService {
      */
     @Override
     public ResponseEntity<String> findAll(String encode) {
-        log.info("SEARCH FOR PAGES BEGINS");
         EncoderUtilities.validateBase64(encode);
+        log.info("INITIATING PAGINATED SEARCH");
         FindByPageDto request = EncoderUtilities.decodeRequest(encode, FindByPageDto.class);
         EncoderUtilities.validator(request);
         log.info(EncoderUtilities.formatJson(request));
-        Long pageSize = request.getSize() > 0 ?  request.getSize() : 10L;
-        Long pageId = request.getPage() > 0 ? request.getPage() : 1L;
-        String sortBy = "dateTimeReceived";
-        String direction = "asc";
-        Pageable pageable = PaginationUtilities.createPageable(pageId.intValue(), pageSize.intValue(), sortBy, direction);
+        log.info("INITIATING PARAMETER QUERY");
+        Optional<ParametersEntity> pageSizeParam = _iParametersService.findByCodeParameter(1L);
+        log.info("PARAMETER QUERY COMPLETED");
+        Pageable pageable = PageRequest.of(
+                request.getPage() - 1,
+                Integer.parseInt(pageSizeParam.get().getParameter()));
         Page<ContactFormEntity> pageResult = _contactFormConsultations.findAll(pageable);
-        List<ContactFormDto> contactFormDto = pageResult.stream()
+        List<ContactFormDto> contactFormDtoList = pageResult.stream()
                 .map(this::parse)
                 .toList();
-        PageImpl<ContactFormDto> response = new PageImpl<>(contactFormDto, pageable, pageResult.getTotalElements());
-        log.info("SEARCH FOR PAGINATED ITEMS IS OVER");
+        PageImpl<ContactFormDto> response = new PageImpl<>(contactFormDtoList, pageable, pageResult.getTotalElements());
+        log.info("PAGINATED SEARCH COMPLETED");
         return _errorControlUtilities.handleSuccess(response, 1L);
     }
+
 
     /**
      * Method responsible for creating a new record.

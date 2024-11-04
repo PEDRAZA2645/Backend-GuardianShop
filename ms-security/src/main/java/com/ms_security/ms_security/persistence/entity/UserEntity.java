@@ -1,5 +1,6 @@
 package com.ms_security.ms_security.persistence.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,7 +13,7 @@ import java.util.Set;
 @NoArgsConstructor
 @ToString
 @EqualsAndHashCode
-@Table(name = "USERS", schema = "SECURITY_MICROSERVICES")
+@Table(name = "USERS", schema = "ECOMERS_WITH_INVENTORY")
 @Entity
 public class UserEntity {
     @Id
@@ -45,6 +46,6 @@ public class UserEntity {
             joinColumns = @JoinColumn(name = "USER_ID", referencedColumnName = "USER_ID"),
             inverseJoinColumns = @JoinColumn(name = "ROLE_ID", referencedColumnName = "ROLE_ID")
     )
+    @JsonManagedReference
     private Set<RoleEntity> roles = new HashSet<>();
-
 }

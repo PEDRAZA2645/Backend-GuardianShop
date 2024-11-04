@@ -28,8 +28,23 @@ spring:
           starttls:
             enable: true
 
-extrenal:
+external:
   url-api-container: ${EXTERNAL_API_URL}
+
+stripe:
+  key:
+    secret: ${STRIPE_KEY_SECRET}
+    public: ${STRIPE_KEY_PUBLIC}
+
+paypal:
+  client-id: ${CLIENT_ID}
+  client-secret: ENC(${CLIENT_SECRET})
+  client-mode: ${CLIENT_MODE} # Use #sandbox for testing and 'live' for Production
+
+mercadopago:
+  access:
+    token: ${TOKEN}
+    public-key: ${PUBLIC_KEY}
 
 jasypt:
   encryptor:

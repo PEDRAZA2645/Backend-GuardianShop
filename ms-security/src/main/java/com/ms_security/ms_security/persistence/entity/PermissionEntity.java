@@ -40,4 +40,5 @@ public class PermissionEntity {
     @Column(name = "DATE_TIME_UPDATE")
     private String dateTimeUpdate;
 
+
 }

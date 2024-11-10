@@ -26,13 +26,28 @@ public interface IAuthServices {
     HashMap<String, String> login(LoginDto login) throws Exception;
 
     /**
-     * Registers a new user in the system.
+     * Registers a new user by validating and saving their information.
+     * <p>
+     * This method validates the user's data, checks if the user already exists,
+     * encodes the user's password, and saves the new user to the database.
+     * </p>
      *
      * @param encode Base64 encoded string containing the new user details.
-     * @return a ResponseErrorDto containing information about the registration result
-     * @throws Exception if registration fails or an error occurs during the process
+     * @return a ResponseDto with the result of the registration
+     * @throws Exception if there is an error during registration
      */
-    ResponseEntity<String> register(String encode);
+    /**
+     * Registers a new user by validating and saving their information.
+     * <p>
+     * This method validates the user's data, checks if the user already exists,
+     * encodes the user's password, and saves the new user to the database.
+     * </p>
+     *
+     * @param user the user entity to be registered
+     * @return a ResponseDto with the result of the registration
+     * @throws Exception if there is an error during registration
+     */
+    ResponseErrorDto register(UserEntity user) throws Exception;
 
     /**
      * Sends a password reset link to the user's email address.

@@ -1,5 +1,6 @@
 package com.ms_security.ms_security.persistence.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
@@ -46,6 +47,6 @@ public class UserEntity {
             joinColumns = @JoinColumn(name = "USER_ID", referencedColumnName = "USER_ID"),
             inverseJoinColumns = @JoinColumn(name = "ROLE_ID", referencedColumnName = "ROLE_ID")
     )
-    @JsonManagedReference
+    @JsonIgnore
     private Set<RoleEntity> roles = new HashSet<>();
 }

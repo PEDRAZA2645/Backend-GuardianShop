@@ -2,9 +2,15 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6b0c3a76-91cd-45ea-aa64-d83be8b6ac01" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/middleware" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ms-security/eviroment/EnvironmentVariables.env" beforeDir="false" afterPath="$PROJECT_DIR$/ms-security/eviroment/EnvironmentVariables.env" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ms-security/src/main/java/com/ms_security/ms_security/config/ErrorConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/ms-security/src/main/java/com/ms_security/ms_security/config/ErrorConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/middleware/.gradle/8.8/checksums/checksums.lock" beforeDir="false" afterPath="$PROJECT_DIR$/middleware/.gradle/8.8/checksums/checksums.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/middleware/.gradle/8.8/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/middleware/.gradle/8.8/executionHistory/executionHistory.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/middleware/.gradle/8.8/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/middleware/.gradle/8.8/fileHashes/fileHashes.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/middleware/.gradle/8.8/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/middleware/.gradle/8.8/fileHashes/fileHashes.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/middleware/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/middleware/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/middleware/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/middleware/.gradle/file-system.probe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ms-security/src/main/java/com/ms_security/ms_security/persistence/entity/RoleEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/ms-security/src/main/java/com/ms_security/ms_security/persistence/entity/RoleEntity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ms-security/src/main/java/com/ms_security/ms_security/persistence/entity/UserEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/ms-security/src/main/java/com/ms_security/ms_security/persistence/entity/UserEntity.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -13,6 +19,9 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 8
@@ -26,7 +35,7 @@
   &quot;keyToString&quot;: {
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;feature/DoctorStrange&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
@@ -42,6 +51,8 @@
       <updated>1727366043823</updated>
       <workItem from="1727366048218" duration="63000" />
       <workItem from="1729989668808" duration="1000" />
+      <workItem from="1731261522280" duration="124000" />
+      <workItem from="1731261739132" duration="34000" />
     </task>
     <servers />
   </component>

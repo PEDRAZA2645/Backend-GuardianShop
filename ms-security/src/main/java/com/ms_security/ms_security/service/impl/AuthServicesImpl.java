@@ -96,7 +96,6 @@ public class AuthServicesImpl implements IAuthServices {
      * encodes the user's password, and saves the new user to the database.
      * </p>
      *
-     * @param encode Base64 encoded string containing the new user details.
      * @return a ResponseDto with the result of the registration
      * @throws Exception if there is an error during registration
      */
@@ -133,7 +132,6 @@ public class AuthServicesImpl implements IAuthServices {
             throw new Exception("Error registering user: " + e.getMessage(), e);
         }
     }
-
 
 
     /**
@@ -210,48 +208,5 @@ public class AuthServicesImpl implements IAuthServices {
         _revokedTokens.add(token);
     }
 
-    /**
-     * Converts UserEntity to UserDto.
-     *
-     * @param entity UserEntity to be converted.
-     * @return UserDto with data from UserEntity.
-     */
-    private UserDto parse(UserEntity entity) {
-        UserDto userDto = new UserDto();
-        userDto.setId(entity.getId());
-        userDto.setName(entity.getName());
-        userDto.setLastName(entity.getLastName());
-        userDto.setUserName(entity.getUserName());
-        userDto.setEmail(entity.getEmail());
-        userDto.setStatus(entity.getStatus());
-        userDto.setCreateUser(entity.getCreateUser());
-        userDto.setUpdateUser(entity.getUpdateUser());
-        Set<String> roleNames = entity.getRoles().stream()
-                .map(RoleEntity::getName)
-                .collect(Collectors.toSet());
-        userDto.setRoles(roleNames);
-        return userDto;
-    }
 
-    /**
-     * Converts a UserDto to UserEntity for creation.
-     *
-     * @param dto UserDto to be converted.
-     * @param entity New UserEntity instance.
-     * @return UserEntity with the data from UserDto.
-     */
-    private UserEntity parseEntCreate(UserDto dto, UserEntity entity) {
-        UserEntity userEntity = new UserEntity();
-        userEntity.setId(dto.getId());
-        userEntity.setName(dto.getName());
-        userEntity.setLastName(dto.getLastName());
-        userEntity.setUserName(dto.getUserName());
-        userEntity.setEmail(dto.getEmail());
-        userEntity.setPassword(_passwordEncoder.encode(dto.getPassword()));
-        userEntity.setStatus(dto.getStatus());
-        userEntity.setCreateUser(entity.getCreateUser());
-        userEntity.setUpdateUser(entity.getUpdateUser());
-        userEntity.setDateTimeCreation(entity.getDateTimeCreation());
-        return userEntity;
-    }
 }

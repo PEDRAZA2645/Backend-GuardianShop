@@ -108,9 +108,13 @@ public class AuthServicesImpl implements IAuthServices {
         EncoderUtilities.validator(userDto, UserDto.Create.class);
         log.info(EncoderUtilities.formatJson(userDto));
         log.info("START SEARCH BY NAME");
-        Optional<UserEntity> existingUser = _userConsultations.findByUserName(userDto.getName());
+        Optional<UserEntity> existingUser = _userConsultations.findByUserName(userDto.getUserName());
         if (existingUser.isPresent()) return _errorControlUtilities.handleSuccess(null, 12L);
         log.info("END SEARCH BY NAME");
+        log.info("START SEARCH BY EMAIL");
+        Optional<UserEntity> existingemail = _userConsultations.findByEmail(userDto.getEmail());
+        if (existingemail.isPresent()) return _errorControlUtilities.handleSuccess(null, 12L);
+        log.info("END SEARCH BY EMAIL");
         UserEntity userEntity = parseEntCreate(userDto, new UserEntity());
         userEntity.setCreateUser("REGISTER");
         userEntity.setDateTimeCreation(new Date().toString());

@@ -35,7 +35,7 @@ public class AuthController {
     /**
      * Registers a new user.
      *
-     * @param entity request body containing the new user details
+     * @param user the user entity containing the details of the new user
      * @return a ResponseEntity containing a ResponseDto with the registration status
      * @throws Exception if an error occurs during the registration process
      */
@@ -45,10 +45,9 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content(schema = @Schema(implementation = ResponseErrorDto.class))),
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(schema = @Schema(implementation = ResponseErrorDto.class)))
     })
-    @PostMapping(path ="/register", produces = {"application/json"})
-    private ResponseEntity<String> register(@RequestBody String entity){
-        log.info("json front2: {}", entity);
-        return _authServices.register(entity);
+    @PostMapping("/register")
+    private ResponseEntity<ResponseErrorDto> register(@RequestBody UserEntity user) throws Exception {
+        return new ResponseEntity<>(_authServices.register(user), HttpStatus.CREATED);
     }
 
     /**

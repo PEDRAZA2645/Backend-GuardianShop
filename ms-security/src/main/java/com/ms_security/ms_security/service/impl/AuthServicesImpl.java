@@ -50,6 +50,7 @@ public class AuthServicesImpl implements IAuthServices {
     private final IJWTUtilityService _jwtUtilityService;
     private final IEmailService _emailService;
     private final PasswordEncoder _passwordEncoder;
+    private final UserValidation _userValidation;
 
     /**
      * Logs in a user by validating their credentials and generating a JWT.
@@ -95,50 +96,31 @@ public class AuthServicesImpl implements IAuthServices {
      * encodes the user's password, and saves the new user to the database.
      * </p>
      *
-     * @param encode Base64 encoded string containing the new user details.
      * @return a ResponseDto with the result of the registration
      * @throws Exception if there is an error during registration
      */
     @Override
-    public ResponseEntity<String> register(String encode) {
-        EncoderUtilities.validateBase64(encode);
-        log.info("json front1: {}", encode);
-        log.info("START INSERT");
-        UserDto userDto = EncoderUtilities.decodeRequest(encode, UserDto.class);
-        EncoderUtilities.validator(userDto, UserDto.Create.class);
-        log.info(EncoderUtilities.formatJson(userDto));
-        log.info("START SEARCH BY NAME");
-        Optional<UserEntity> existingUser = _userConsultations.findByUserName(userDto.getUserName());
-        if (existingUser.isPresent()) return _errorControlUtilities.handleSuccess(null, 12L);
-        log.info("END SEARCH BY NAME");
-        log.info("START SEARCH BY EMAIL");
-        Optional<UserEntity> existingemail = _userConsultations.findByEmail(userDto.getEmail());
-        if (existingemail.isPresent()) return _errorControlUtilities.handleSuccess(null, 12L);
-        log.info("END SEARCH BY EMAIL");
-        UserEntity userEntity = parseEntCreate(userDto, new UserEntity());
-        userEntity.setCreateUser("REGISTER");
-        userEntity.setDateTimeCreation(new Date().toString());
-        if (userDto.getRolesToAdd() != null && !userDto.getRolesToAdd().isEmpty()) {
-            log.info("START SEARCH ROLE BY ID");
-            Set<RoleEntity> roles = userDto.getRolesToAdd().stream()
-                    .map(_roleConsultations::findById)
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .collect(Collectors.toSet());
-            userEntity.getRoles().addAll(roles);
-            log.info("END SEARCH ROLE BY ID");
-        } else {
-            log.info("ASSIGNING DEFAULT ROLE ID 3");
-            Optional<RoleEntity> defaultRole = _roleConsultations.findById(3L);
-            defaultRole.ifPresent(userEntity.getRoles()::add);
+    public ResponseErrorDto register(UserEntity user) throws Exception {
+        try {
+            ResponseErrorDto response = _userValidation.validate(user);
+            if (response.getNumOfErrors() > 0) {
+                return response;
+            }
+            Optional<UserEntity> existingUser = _userConsultations.findByEmail(user.getEmail());
+            if (existingUser.isPresent()) {
+                response.setNumOfErrors(1);
+                response.setMessage("User already exists!");
+                return response;
+            }
+            BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
+            user.setPassword(encoder.encode(user.getPassword()));
+            _userConsultations.addNew(user);
+            response.setMessage("User successfully registered!");
+            return response;
+        } catch (Exception e) {
+            throw new Exception("Error registering user: " + e.getMessage(), e);
         }
-        UserEntity savedUser = _userConsultations.addNew(userEntity);
-        log.info("JSON FRONT: {}", savedUser);
-        UserDto savedUserDto = parse(savedUser);
-        log.info("INSERT ENDED");
-        return _errorControlUtilities.handleSuccess(savedUserDto, 1L);
     }
-
 
 
     /**
@@ -215,48 +197,5 @@ public class AuthServicesImpl implements IAuthServices {
         _revokedTokens.add(token);
     }
 
-    /**
-     * Converts UserEntity to UserDto.
-     *
-     * @param entity UserEntity to be converted.
-     * @return UserDto with data from UserEntity.
-     */
-    private UserDto parse(UserEntity entity) {
-        UserDto userDto = new UserDto();
-        userDto.setId(entity.getId());
-        userDto.setName(entity.getName());
-        userDto.setLastName(entity.getLastName());
-        userDto.setUserName(entity.getUserName());
-        userDto.setEmail(entity.getEmail());
-        userDto.setStatus(entity.getStatus());
-        userDto.setCreateUser(entity.getCreateUser());
-        userDto.setUpdateUser(entity.getUpdateUser());
-        Set<String> roleNames = entity.getRoles().stream()
-                .map(RoleEntity::getName)
-                .collect(Collectors.toSet());
-        userDto.setRoles(roleNames);
-        return userDto;
-    }
 
-    /**
-     * Converts a UserDto to UserEntity for creation.
-     *
-     * @param dto UserDto to be converted.
-     * @param entity New UserEntity instance.
-     * @return UserEntity with the data from UserDto.
-     */
-    private UserEntity parseEntCreate(UserDto dto, UserEntity entity) {
-        UserEntity userEntity = new UserEntity();
-        userEntity.setId(dto.getId());
-        userEntity.setName(dto.getName());
-        userEntity.setLastName(dto.getLastName());
-        userEntity.setUserName(dto.getUserName());
-        userEntity.setEmail(dto.getEmail());
-        userEntity.setPassword(_passwordEncoder.encode(dto.getPassword()));
-        userEntity.setStatus(dto.getStatus());
-        userEntity.setCreateUser(entity.getCreateUser());
-        userEntity.setUpdateUser(entity.getUpdateUser());
-        userEntity.setDateTimeCreation(entity.getDateTimeCreation());
-        return userEntity;
-    }
 }

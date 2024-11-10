@@ -44,4 +44,6 @@ public class RoleEntity {
     )
     @JsonIgnore
     private Set<PermissionEntity> permissions = new HashSet<>();
+
+
 }

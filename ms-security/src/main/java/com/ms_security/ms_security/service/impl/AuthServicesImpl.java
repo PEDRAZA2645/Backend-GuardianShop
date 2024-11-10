@@ -99,6 +99,17 @@ public class AuthServicesImpl implements IAuthServices {
      * @return a ResponseDto with the result of the registration
      * @throws Exception if there is an error during registration
      */
+    /**
+     * Registers a new user by validating and saving their information.
+     * <p>
+     * This method validates the user's data, checks if the user already exists,
+     * encodes the user's password, and saves the new user to the database.
+     * </p>
+     *
+     * @param user the user entity to be registered
+     * @return a ResponseDto with the result of the registration
+     * @throws Exception if there is an error during registration
+     */
     @Override
     public ResponseErrorDto register(UserEntity user) throws Exception {
         try {

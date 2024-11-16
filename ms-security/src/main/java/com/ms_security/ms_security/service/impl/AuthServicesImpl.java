@@ -44,12 +44,9 @@ import java.util.stream.Collectors;
 public class AuthServicesImpl implements IAuthServices {
 
     private final UserConsultations _userConsultations;
-    private final ErrorControlUtilities _errorControlUtilities;
-    private final RoleConsultations _roleConsultations;
     private final HashSet<String> _revokedTokens = new HashSet<>();
     private final IJWTUtilityService _jwtUtilityService;
     private final IEmailService _emailService;
-    private final PasswordEncoder _passwordEncoder;
     private final UserValidation _userValidation;
 
     /**

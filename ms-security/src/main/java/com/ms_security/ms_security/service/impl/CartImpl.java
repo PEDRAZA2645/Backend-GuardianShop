@@ -161,6 +161,7 @@ public class CartImpl implements ICartService {
             newItem.setName(inventory.getName());
             newItem.setCartId(savedCart.getId());
             newItem.setProduct(inventory);
+            newItem.setProductId(cartRequest.getInventoryId());
             newItem.setQuantity(cartRequest.getQuantity());
             newItem.setPrice(inventory.getSalePrice());
             newItem.setCreateUser(cartRequest.getCreateUser());

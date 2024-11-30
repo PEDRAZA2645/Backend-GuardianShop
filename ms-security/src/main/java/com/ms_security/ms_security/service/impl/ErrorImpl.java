@@ -36,7 +36,7 @@ public class ErrorImpl implements IErrorService {
      */
     @Override
     public ErrorResponseDto findByErrorId(String errorId) {
-        String url = apiUrl + "/error/list/errorId";
+        String url = apiUrl + "error/list/errorId";
         HttpHeaders headers = new HttpHeaders();
         headers.set("Content-Type", "application/json");
         HttpEntity<String> requestEntity = new HttpEntity<>(errorId, headers);
@@ -56,7 +56,7 @@ public class ErrorImpl implements IErrorService {
      */
     @Override
     public List<ErrorResponseDto> findAllErrors() {
-        String url = apiUrl + "/error/list/all";
+        String url = apiUrl + "error/list/all";
         ResponseEntity<List<ErrorResponseDto>> responseEntity = restTemplate.exchange(
                 url,
                 HttpMethod.POST,

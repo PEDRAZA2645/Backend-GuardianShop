@@ -9,6 +9,7 @@ import com.ms_security.ms_security.service.IServicesService;
 import com.ms_security.ms_security.service.impl.consultations.InventoryConsultations;
 import com.ms_security.ms_security.service.impl.consultations.ServicesConsultations;
 import com.ms_security.ms_security.service.model.dto.FindByPageDto;
+import com.ms_security.ms_security.service.model.dto.InventoryDto;
 import com.ms_security.ms_security.service.model.dto.ServicesDto;
 import com.ms_security.ms_security.utilities.EncoderUtilities;
 import com.ms_security.ms_security.utilities.ErrorControlUtilities;
@@ -102,11 +103,11 @@ public class ServicesImpl implements IServicesService {
         log.info(EncoderUtilities.formatJson(servicesDto));
         log.info("START SEARCH BY CODE");
         Optional<ServicesEntity> name = _servicesConsultations.findByCode(servicesDto.getCode());
-        if (name.isPresent()) return _errorControlUtilities.handleSuccess(null, 21L);
+        if (name.isPresent()) return _errorControlUtilities.handleSuccess(null, 15L);
         log.info("END SEARCH BY CODE");
         log.info("START SEARCH BY NAME");
         Optional<ServicesEntity> servicesEntities = _servicesConsultations.findByName(servicesDto.getName());
-        if (servicesEntities.isPresent()) return _errorControlUtilities.handleSuccess(null, 10L);
+        if (servicesEntities.isPresent()) return _errorControlUtilities.handleSuccess(null, 7L);
         log.info("END SEARCH BY NAME");
         ServicesEntity existingEntity = parseEnt(servicesDto, new ServicesEntity());
         existingEntity.setCreateUser(servicesDto.getCreateUser());
@@ -157,11 +158,46 @@ public class ServicesImpl implements IServicesService {
         Optional<ServicesEntity> serviceOpt = _servicesConsultations.findById(productId);
         if (serviceOpt.isPresent()) {
             ServicesEntity service = serviceOpt.get();
-            service.setSalePrice(newPrice); // Actualiza el precio
-            _servicesConsultations.updateData(service); // Guarda los cambios
+            service.setSalePrice(newPrice);
+            _servicesConsultations.updateData(service);
         }else _errorControlUtilities.handleSuccess(null,3L);
     }
 
+
+    @Override
+    public ResponseEntity<String> findServiceWithInventory(String encode) {
+        log.info("STARTING SEARCH FOR SERVICE WITH INVENTORY");
+        EncoderUtilities.validateBase64(encode);
+        ServicesDto findByIdDto = EncoderUtilities.decodeRequest(encode, ServicesDto.class);
+        EncoderUtilities.validator(findByIdDto);
+        log.info(EncoderUtilities.formatJson(findByIdDto));
+        Optional<ServicesEntity> servicesEntityOpt = _servicesConsultations.findByIdWithInventories(findByIdDto.getId());
+        if (servicesEntityOpt.isEmpty()) {
+            log.warn("SERVICE NOT FOUND");
+            return _errorControlUtilities.handleSuccess(null, 3L);
+        }
+        ServicesEntity service = servicesEntityOpt.get();
+        ServicesDto serviceDto = parse(service);
+        List<InventoryEntity> inventories = _inventoryConsultations.findAllByServiceId(service.getId());
+        List<InventoryDto> inventoryDtos = inventories.stream()
+                .map(this::parseInventory)
+                .toList();
+        serviceDto.setInventories(inventoryDtos);
+        log.info("SERVICE AND INVENTORY FETCH COMPLETED");
+        return _errorControlUtilities.handleSuccess(serviceDto, 1L);
+    }
+
+    private InventoryDto parseInventory(InventoryEntity entity) {
+        InventoryDto dto = new InventoryDto();
+        dto.setId(entity.getId());
+        dto.setServiceId(entity.getServiceId());
+        dto.setProductCode(entity.getProductCode());
+        dto.setName(entity.getName());
+        dto.setReference(entity.getReference());
+        dto.setStock(entity.getStock());
+        dto.setSalePrice(entity.getSalePrice());
+        return dto;
+    }
 
 
     /**

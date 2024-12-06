@@ -35,10 +35,10 @@ public class CartConsultations {
         return _cartRepository.findAll(pageable);
     }
 
-    @Cacheable(value = "CartFindByUserId", key = "#userId")
+    @Cacheable(value = "CartFindByUserName", key = "#userId")
     @Transactional(readOnly = true)
-    public Optional<CartEntity> findByUserId(Long userId) {
-        return _cartRepository.findByUserId(userId);
+    public Optional<CartEntity> findByUserName(String userName) {
+        return _cartRepository.findByUserName(userName);
     }
 
     @CacheEvict(value = {"CartFindById", "CartFindAll"}, allEntries = true)
@@ -67,5 +67,10 @@ public class CartConsultations {
     @Transactional(readOnly = true)
     public Optional<CartEntity> findByUserIdAndStatus(Long userId, String status) {
         return _cartRepository.findByUserIdAndStatus(userId, status);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CartEntity> findCartsByUserId(Long userId) {
+        return _cartRepository.findByUserId(userId);
     }
 }

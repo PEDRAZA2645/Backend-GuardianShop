@@ -101,4 +101,16 @@ public class ServicesContoller {
     public ResponseEntity<String>  updateData(@RequestBody String entity){
         return _iServicesService.updateData(entity);
     }
+
+    @Operation(summary = "GET SERVICE WITH INVENTORY DETAILS")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "SERVICE AND INVENTORY DETAILS FOUND"),
+            @ApiResponse(responseCode = "404", description = "SERVICE NOT FOUND"),
+            @ApiResponse(responseCode = "400", description = "INVALID INPUT")
+    })
+    @PostMapping("/inventory")
+    public ResponseEntity<String> getServiceWithInventory(@RequestBody String encode) {
+        return _iServicesService.findServiceWithInventory(encode);
+    }
+
 }

@@ -69,7 +69,7 @@ public class OrderController {
         return orderService.updateData(entity);
     }
 
-    @Operation(description = "CHECKOUT CART")
+    @Operation(description = "CHECKOUT ORDER")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "SUCCESSFUL OPERATION", content = @Content(schema = @Schema(implementation = ResponseEntity.class))),
             @ApiResponse(responseCode = "400", description = "GENERAL ERROR", content = @Content(schema = @Schema(implementation = ResponseEntity.class)))
@@ -93,7 +93,7 @@ public class OrderController {
 
             if (orderDto == null) {
                 log.error("Failed to decode OrderDto from checkout response.");
-                return _errorControlUtilities.handleSuccess(null, 30L); // Error si no hay detalles de la orden
+                return _errorControlUtilities.handleSuccess(null, 22L); // Error si no hay detalles de la orden
             }
 
             // URL del controlador de pago
@@ -108,7 +108,7 @@ public class OrderController {
             // Verificar la respuesta del servicio de pago
             if (!paymentResponse.getStatusCode().is2xxSuccessful()) {
                 log.info("PAYMENT FAILED");
-                return _errorControlUtilities.handleSuccess(null, 40L); // Manejar error de pago
+                return _errorControlUtilities.handleSuccess(null, 26L); // Manejar error de pago
             }
 
             log.info("PAYMENT SUCCESSFUL, PROCEEDING WITH ORDER FINALIZATION");

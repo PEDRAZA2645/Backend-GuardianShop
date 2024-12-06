@@ -16,7 +16,7 @@ import java.util.Optional;
 @Repository
 public interface ICartRepository extends JpaRepository<CartEntity, Long> {
     Page<CartEntity> findAll(Pageable pageable);
-    Optional<CartEntity> findByUserId(Long userId);
+    Optional<CartEntity> findByUserName(String userName);
     List<CartEntity> findAllByStatus(String status);
 
     @Modifying
@@ -30,5 +30,7 @@ public interface ICartRepository extends JpaRepository<CartEntity, Long> {
     void deleteItemsByCartId(@Param("cartId") Long cartId);
 
     Optional<CartEntity> findByUserIdAndStatus(Long userId, String status);
+
+    List<CartEntity> findByUserId(Long userId);
 
 }

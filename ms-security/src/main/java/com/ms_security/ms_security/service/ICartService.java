@@ -23,4 +23,6 @@ public interface ICartService {
     ResponseEntity<String> deleteCart(String encode);
 
     ResponseEntity<String> deleteAllPendingCarts();
+
+    public ResponseEntity<String> checkIfUserHasCart(String encode);
 }

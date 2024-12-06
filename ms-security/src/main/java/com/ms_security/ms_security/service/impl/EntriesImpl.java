@@ -85,7 +85,7 @@ public class EntriesImpl implements IEntriesServices {
         log.info(EncoderUtilities.formatJson(entriesDto));
         log.info("START SEARCH BY INVOICE NUMBER");
         Optional<EntriesEntity> entriesEntity = _entriesConsultations.findByInvoiceNumber(entriesDto.getInvoiceNumber());
-        if (entriesEntity.isPresent()) return _errorControlUtilities.handleSuccess(null, 34L);
+        if (entriesEntity.isPresent()) return _errorControlUtilities.handleSuccess(null, 23L);
         log.info("END SEARCH BY INVOICE NUMBER");
         EntriesEntity entity = parseEnt(entriesDto, new EntriesEntity());
         Long nextOrderNumber = _entriesConsultations.findMaxConsecutive() + 1;
@@ -117,7 +117,7 @@ public class EntriesImpl implements IEntriesServices {
         if (existingEntriesEntity.isEmpty()) return _errorControlUtilities.handleSuccess(null, 3L);
         log.info("END SEARCH BY ID");
         EntriesEntity existingEntity = existingEntriesEntity.get();
-        if (!Objects.equals(existingEntity.getProductId(), entriesDto.getProductId())) return _errorControlUtilities.handleSuccess(null,48L);
+        if (!Objects.equals(existingEntity.getProductId(), entriesDto.getProductId())) return _errorControlUtilities.handleSuccess(null,31L);
         Optional<InventoryEntity> inventory = _inventoryConsultations.findById(existingEntity.getProductId());
         if (inventory.isEmpty()) return _errorControlUtilities.handleSuccess(null, 3L);
         _inventoryService.stockAdjustment(inventory.get().getProductCode(), existingEntity.getQuantity(), entriesDto.getUpdateUser());

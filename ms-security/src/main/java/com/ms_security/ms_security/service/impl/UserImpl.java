@@ -104,7 +104,7 @@ public class UserImpl implements IUserService {
         log.info(EncoderUtilities.formatJson(userDto));
         log.info("START SEARCH BY NAME");
         Optional<UserEntity> existingUser = _userConsultations.findByUserName(userDto.getName());
-        if (existingUser.isPresent()) return _errorControlUtilities.handleSuccess(null, 12L);
+        if (existingUser.isPresent()) return _errorControlUtilities.handleSuccess(null, 8L);
         log.info("END SEARCH BY NAME");
         UserEntity userEntity = parseEntCreate(userDto, new UserEntity());
         userEntity.setCreateUser(userDto.getCreateUser());
@@ -118,7 +118,7 @@ public class UserImpl implements IUserService {
                     .collect(Collectors.toSet());
             userEntity.getRoles().addAll(roles);
             log.info("END SEARCH ROLE BY ID");
-        }else _errorControlUtilities.handleSuccess(null, 18L);
+        }else _errorControlUtilities.handleSuccess(null, 13L);
         UserEntity savedUser = _userConsultations.addNew(userEntity);
         UserDto savedUserDto = parse(savedUser);
         log.info("INSERT ENDED");
@@ -141,7 +141,7 @@ public class UserImpl implements IUserService {
         Optional<UserEntity> existingUserOpt = _userConsultations.findById(userDto.getId());
         if (existingUserOpt.isEmpty()) return _errorControlUtilities.handleSuccess(null, 3L);
         UserEntity existingUser = existingUserOpt.get();
-        if (!existingUser.getUserName().equals(userDto.getUserName())) return _errorControlUtilities.handleSuccess(null, 13L);
+        if (!existingUser.getUserName().equals(userDto.getUserName())) return _errorControlUtilities.handleSuccess(null, 9L);
         if (userDto.getPassword() != null && !userDto.getPassword().isEmpty()) existingUser.setPassword(_passwordEncoder.encode(userDto.getPassword()));
         UserEntity updatedUser = parseEntUpdate(userDto, existingUser);
         updatedUser.setUpdateUser(userDto.getUpdateUser());
@@ -155,7 +155,7 @@ public class UserImpl implements IUserService {
                     .collect(Collectors.toSet());
             existingUser.getRoles().addAll(newRoles);
             log.info("END SEARCH ROLE TO ADD BY ID");
-        }else _errorControlUtilities.handleSuccess(null, 18L);
+        }else _errorControlUtilities.handleSuccess(null, 13L);
         if (userDto.getRolesToRemove() != null) {
             log.info("START SEARCH ROLE TO REMOVE BY ID");
             Set<RoleEntity> rolesToRemove = userDto.getRolesToRemove().stream()
@@ -164,7 +164,7 @@ public class UserImpl implements IUserService {
                     .map(Optional::get)
                     .collect(Collectors.toSet());
             existingUser.getRoles().removeAll(rolesToRemove);
-        }else _errorControlUtilities.handleSuccess(null, 18L);
+        }else _errorControlUtilities.handleSuccess(null, 13L);
         UserEntity savedUser = _userConsultations.updateData(existingUser);
         UserDto savedUserDto = parse(savedUser);
         log.info("UPDATE ENDED");

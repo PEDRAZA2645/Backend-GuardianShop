@@ -99,7 +99,7 @@ public class ContactFormImpl implements IContactFormService {
         log.info(EncoderUtilities.formatJson(contactFormDto));
         log.info("START SEARCH BY EMAIL");
         Optional<ContactFormEntity> existingForm = _contactFormConsultations.findByEmail(contactFormDto.getEmail());
-        if (existingForm.isPresent()) return _errorControlUtilities.handleSuccess(null, 4L);
+        if (existingForm.isPresent()) return _errorControlUtilities.handleSuccess(null, 10L);
         log.info("END SEARCH BY EMAIL");
         ContactFormEntity existingEntity = parseEnt(contactFormDto, new ContactFormEntity());
         existingEntity.setDateTimeReceived(new Date().toString());
@@ -110,7 +110,7 @@ public class ContactFormImpl implements IContactFormService {
             sendNotificationEmail(contactFormDtos);
         } catch (MessagingException e) {
             log.error("Error sending email: {}", e.getMessage());
-            return _errorControlUtilities.handleSuccess(null, 17L);
+            return _errorControlUtilities.handleSuccess(null, 12L);
         }
         return _errorControlUtilities.handleSuccess(contactFormDtos, 1L);
     }
@@ -133,7 +133,7 @@ public class ContactFormImpl implements IContactFormService {
         log.info("END SEARCH BY ID");
         log.info("START SEARCH EMAIL");
         ContactFormEntity contactFormEntity = contactForm.get();
-        if (!contactFormEntity.getEmail().equals(contactFormDto.getEmail())) return _errorControlUtilities.handleSuccess(null, 5L);
+        if (!contactFormEntity.getEmail().equals(contactFormDto.getEmail())) return _errorControlUtilities.handleSuccess(null, 11L);
         log.info("END SEARCH EMAIL");
         ContactFormEntity existingEntity = parseEnt(contactFormDto, new ContactFormEntity());
         existingEntity.setDateTimeReceived(new Date().toString());
@@ -144,7 +144,7 @@ public class ContactFormImpl implements IContactFormService {
             sendNotificationEmail(updatedDto);
         } catch (MessagingException e) {
             log.error("Error sending email: {}", e.getMessage());
-            return _errorControlUtilities.handleSuccess(null, 17L);
+            return _errorControlUtilities.handleSuccess(null, 12L);
         }
         return _errorControlUtilities.handleSuccess(updatedDto, 1L);
     }

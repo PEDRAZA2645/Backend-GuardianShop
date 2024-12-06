@@ -102,7 +102,7 @@ public class PermissionImpl implements IPermissionService {
         log.info(EncoderUtilities.formatJson(permissionDto));
         log.info("START SEARCH BY NAME");
         Optional<PermissionEntity> name = _permissionConsultations.findByName(permissionDto.getName());
-        if (name.isPresent()) return _errorControlUtilities.handleSuccess(null, 6L);
+        if (name.isPresent()) return _errorControlUtilities.handleSuccess(null, 4L);
         log.info("END SEARCH BY NAME");
         PermissionEntity existingEntity = parseEnt(permissionDto, new PermissionEntity());
         existingEntity.setCreateUser(permissionDto.getCreateUser());
@@ -132,7 +132,7 @@ public class PermissionImpl implements IPermissionService {
         log.info("START SEARCH BY ID");
         log.info("START SEARCH BY NAME");
         PermissionEntity permissionEntity = permission.get();
-        if (!permissionEntity.getName().equals(permissionDto.getName())) return _errorControlUtilities.handleSuccess(null, 7L);
+        if (!permissionEntity.getName().equals(permissionDto.getName())) return _errorControlUtilities.handleSuccess(null, 5L);
         log.info("END SEARCH BY NAME");
         PermissionEntity existingEntity = parseEnt(permissionDto, new PermissionEntity());
         existingEntity.setUpdateUser(permissionDto.getUpdateUser());

@@ -43,4 +43,6 @@ public interface IServicesService {
     ResponseEntity<String> updateData(String encode);
 
     void updateServiceSalePrice(Long productId, BigDecimal newPrice);
+
+    public ResponseEntity<String> findServiceWithInventory(String encode);
 }

@@ -101,7 +101,7 @@ public class RoleImpl implements IRoleService {
         log.info(EncoderUtilities.formatJson(roleDto));
         log.info("START SEARCH BY NAME");
         Optional<RoleEntity> name = _roleConsultations.findByName(roleDto.getName());
-        if (name.isPresent()) return _errorControlUtilities.handleSuccess(null, 8L);
+        if (name.isPresent()) return _errorControlUtilities.handleSuccess(null, 6L);
         log.info("END SEARCH BY NAME");
         RoleEntity existingEntity = parseEntCreate(roleDto, new RoleEntity());
         existingEntity.setCreateUser(roleDto.getCreateUser());

@@ -96,7 +96,7 @@ public class CategoryImpl implements ICategoryService {
         log.info(EncoderUtilities.formatJson(categoryDto));
         log.info("START SEARCH BY NAME");
         Optional<CategoryEntity> name = _categoryConsultations.findByName(categoryDto.getName());
-        if (name.isPresent()) return _errorControlUtilities.handleSuccess(null, 19L);
+        if (name.isPresent()) return _errorControlUtilities.handleSuccess(null, 14L);
         log.info("END SEARCH BY NAME");
         CategoryEntity existingEntity = parseEnt(categoryDto, new CategoryEntity());
         existingEntity.setCreateUser(categoryDto.getCreateUser());
@@ -124,7 +124,7 @@ public class CategoryImpl implements ICategoryService {
         Optional<CategoryEntity> categoryEntity = _categoryConsultations.findById(categoryDto.getId());
         if (categoryEntity.isEmpty()) return _errorControlUtilities.handleSuccess(null, 3L);
         Optional<CategoryEntity> name = _categoryConsultations.findByName(categoryDto.getName());
-        if (name.isPresent()) return _errorControlUtilities.handleSuccess(null, 19L);
+        if (name.isPresent()) return _errorControlUtilities.handleSuccess(null, 14L);
         log.info("START SEARCH BY ID");
         CategoryEntity existingEntity = parseEnt(categoryDto, categoryEntity.get());
         existingEntity.setUpdateUser(categoryDto.getUpdateUser());

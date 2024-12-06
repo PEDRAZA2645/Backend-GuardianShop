@@ -31,8 +31,8 @@ public class OrderItemConsultations {
 
     @Cacheable(value = "OrderItemFindAll")
     @Transactional(readOnly = true)
-    public List<OrderItemEntity> findAll() {
-        return _orderItemRepository.findAll();
+    public Page<OrderItemEntity> findAll(Pageable pageable) {
+        return _orderItemRepository.findAll(pageable);
     }
 
     @CacheEvict(value = {"OrderItemFindById", "OrderItemFindAll", "OrderItemFindByProductAndCart"}, allEntries = true)

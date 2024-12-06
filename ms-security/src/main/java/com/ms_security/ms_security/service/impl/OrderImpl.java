@@ -112,7 +112,7 @@ public class OrderImpl implements IOrderService {
             CartEntity cartEntity = cartEntityOptional.get();
             List<OrderItemEntity> cartItems = cartEntity.getItems();
             log.info("NUMBER OF ITEMS IN CART: " + (cartItems != null ? cartItems.size() : 0));
-            if (cartItems == null || cartItems.isEmpty()) return _errorControlUtilities.handleSuccess(null, 42L);
+            if (cartItems == null || cartItems.isEmpty()) return _errorControlUtilities.handleSuccess(null, 27L);
             OrderEntity orderEntity = parseEnt(orderDto, new OrderEntity());
             Long nextOrderNumber = _orderConsultations.findMaxOrderNumber() + 1;
             log.info("GENERATING NEXT ORDER NUMBER: " + nextOrderNumber);
@@ -155,11 +155,11 @@ public class OrderImpl implements IOrderService {
                     InventoryEntity inventory = optionalInventory.get();
                     _iInventoryService.stockExit(inventory.getProductCode(), orderItem.getQuantity(), orderItem.getCreateUser());
                     log.info("STOCK UPDATED SUCCESSFULLY FOR PRODUCT: " + inventory.getProductCode());
-                } else _errorControlUtilities.handleSuccess(null, 36L);
+                } else _errorControlUtilities.handleSuccess(null, 24L);
                 log.info("ENDING INVENTORY OUTPUT ");
             }
             return _errorControlUtilities.handleSuccess(createdOrderDto, 1L);
-        } else return _errorControlUtilities.handleSuccess(null, 44L);
+        } else return _errorControlUtilities.handleSuccess(null, 28L);
     }
 
     /**
@@ -178,13 +178,13 @@ public class OrderImpl implements IOrderService {
         Long userId = orderDto.getUserId();
         log.info("FETCHING CART FOR USER ID: " + userId);
         Optional<OrderEntity> entity = _orderConsultations.findByOrderNumber(orderDto.getOrderNumber());
-        if (entity.isEmpty()) return _errorControlUtilities.handleSuccess(null, 30L);
+        if (entity.isEmpty()) return _errorControlUtilities.handleSuccess(null, 21L);
         Optional<CartEntity> cartEntityOptional = _cartConsultations.findByUserIdAndStatus(userId, "PENDING");
         if (cartEntityOptional.isPresent()) {
             CartEntity cartEntity = cartEntityOptional.get();
             List<OrderItemEntity> cartItems = cartEntity.getItems();
             log.info("NUMBER OF ITEMS IN CART: " + (cartItems != null ? cartItems.size() : 0));
-            if (cartItems == null || cartItems.isEmpty()) return _errorControlUtilities.handleSuccess(null, 42L);
+            if (cartItems == null || cartItems.isEmpty()) return _errorControlUtilities.handleSuccess(null, 27L);
             OrderEntity orderEntity = parseEnt(orderDto, new OrderEntity());
             orderEntity.setOrderNumber(entity.get().getOrderNumber());
             orderEntity.setUpdateUser(orderDto.getUpdateUser());
@@ -235,7 +235,7 @@ public class OrderImpl implements IOrderService {
                     InventoryEntity inventory = optionalInventory.get();
                     _iInventoryService.stockReturned(inventory.getProductCode(), inventory.getPendingStock(), orderItem.getUpdateUser());
                     log.info("STOCK UPDATED SUCCESSFULLY FOR PRODUCT: " + inventory.getProductCode());
-                } else _errorControlUtilities.handleSuccess(null, 36L);
+                } else _errorControlUtilities.handleSuccess(null, 24L);
                 log.info("ENDING INVENTORY OUTPUT ");
             }
             OrderEntity updatedOrder = _orderConsultations.updateData(orderEntity);
@@ -249,11 +249,11 @@ public class OrderImpl implements IOrderService {
                     InventoryEntity inventory = optionalInventory.get();
                     _iInventoryService.stockExit(inventory.getProductCode(), orderItem.getQuantity(), orderItem.getUpdateUser());
                     log.info("STOCK UPDATED SUCCESSFULLY FOR PRODUCT: " + inventory.getProductCode());
-                } else _errorControlUtilities.handleSuccess(null, 36L);
+                } else _errorControlUtilities.handleSuccess(null, 24L);
                 log.info("ENDING INVENTORY OUTPUT ");
             }
             return _errorControlUtilities.handleSuccess(updatedOrderDto, 1L);
-        } else return _errorControlUtilities.handleSuccess(null, 44L);
+        } else return _errorControlUtilities.handleSuccess(null, 28L);
     }
 
 
@@ -274,7 +274,7 @@ public class OrderImpl implements IOrderService {
         EncoderUtilities.validator(orderDto);
         log.info(EncoderUtilities.formatJson(orderDto));
         Optional<OrderEntity> orderEntityOptional = _orderConsultations.findByOrderNumber(orderDto.getOrderNumber());
-        if (orderEntityOptional.isEmpty()) return _errorControlUtilities.handleSuccess(null, 30L);
+        if (orderEntityOptional.isEmpty()) return _errorControlUtilities.handleSuccess(null, 21L);
         OrderEntity orderEntity = orderEntityOptional.get();
         orderEntity.setStatus("CANCELLED");
         orderEntity.setUpdateUser(orderDto.getUpdateUser());
@@ -307,15 +307,15 @@ public class OrderImpl implements IOrderService {
         log.info(EncoderUtilities.formatJson(orderDto));
         log.info("START SEARCH ORDER BY NUMBER");
         Optional<OrderEntity> orderEntity = _orderConsultations.findByOrderNumber(orderDto.getOrderNumber());
-        if (orderEntity.isEmpty()) return _errorControlUtilities.handleSuccess(null, 30L);
+        if (orderEntity.isEmpty()) return _errorControlUtilities.handleSuccess(null, 21L);
         log.info("END SEARCH ORDER BY NUMBER");
         OrderEntity order = orderEntity.get();
-        if (!"PENDING".equals(order.getStatus())) return _errorControlUtilities.handleSuccess(null, 46L);
+        if (!"PENDING".equals(order.getStatus())) return _errorControlUtilities.handleSuccess(null, 30L);
         log.info("START PAYMENT PROCESS");
         ResponseEntity<String> paymentResponse = processPayment(orderDto.getUnifiedPaymentDto());
         if (!paymentResponse.getStatusCode().is2xxSuccessful()) {
             log.info("PAYMENT FAILED");
-            return _errorControlUtilities.handleSuccess(null, 40L);
+            return _errorControlUtilities.handleSuccess(null, 26L);
         }
         log.info("PAYMENT SUCCESSFUL, UPDATING ORDER STATUS");
         order.setStatus("PAID");
@@ -376,7 +376,7 @@ public class OrderImpl implements IOrderService {
         Date limitDate = new Date(now.getTime() - (60 * 60 * 1000));
         List<OrderEntity> pendingOrders = _orderConsultations.findAllByStatus("PENDING");
         log.info("NO PENDING ORDERS FOUND");
-        if (pendingOrders.isEmpty()) return _errorControlUtilities.handleSuccess(null, 45L);
+        if (pendingOrders.isEmpty()) return _errorControlUtilities.handleSuccess(null, 29L);
         log.info("START DEACTIVATING PENDING ORDERS");
         for (OrderEntity order : pendingOrders) {
             if (order.getDateTimeCreation() != null && new Date(order.getDateTimeCreation()).before(limitDate)) {
@@ -406,7 +406,7 @@ public class OrderImpl implements IOrderService {
             ResponseEntity<?> response = _unifiedPaymentController.processPayment(paymentDto);
             return (ResponseEntity<String>) response;
         } catch (Exception e) {
-            return _errorControlUtilities.handleSuccess(null, 40L);
+            return _errorControlUtilities.handleSuccess(null, 26L);
         }
     }
 

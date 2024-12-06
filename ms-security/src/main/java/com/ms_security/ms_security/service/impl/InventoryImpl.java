@@ -82,7 +82,7 @@ public class InventoryImpl implements IInventoryService {
         log.info(EncoderUtilities.formatJson(inventoryDto));
         log.info("START SEARCH BY PRINCIPAL PRODUCT");
         Optional<ServicesEntity> servicesEntity = _servicesConsultations.findById(inventoryDto.getServiceId());
-        if (servicesEntity.isEmpty()) return _errorControlUtilities.handleSuccess(null, 36L);
+        if (servicesEntity.isEmpty()) return _errorControlUtilities.handleSuccess(null, 24L);
         log.info("END SEARCH BY PRINCIPAL PRODUCT");
         String serviceCode = servicesEntity.get().getCode().toString();
         String derivedCode = serviceCode + "-" + inventoryDto.getProductCode();
@@ -90,7 +90,7 @@ public class InventoryImpl implements IInventoryService {
         String sizeName = serviceName + " " + inventoryDto.getReference();
         log.info("START SEARCH BY DERIVED PRODUCT");
         Optional<InventoryEntity> derived = _inventoryConsultations.findByProductCode(derivedCode);
-        if (derived.isPresent()) return _errorControlUtilities.handleSuccess(null, 21L);
+        if (derived.isPresent()) return _errorControlUtilities.handleSuccess(null, 15L);
         log.info("END SEARCH BY DERIVED PRODUCT");
         InventoryEntity existingEntity = parseEnt(inventoryDto, new InventoryEntity());
         existingEntity.setProductCode(derivedCode);
@@ -117,12 +117,12 @@ public class InventoryImpl implements IInventoryService {
         log.info("END SEARCH BY ID");
         log.info("START SEARCH BY PRINCIPAL PRODUCT");
         Optional<ServicesEntity> servicesEntity = _servicesConsultations.findById(inventoryDto.getServiceId());
-        if (servicesEntity.isEmpty()) return _errorControlUtilities.handleSuccess(null, 36L);
+        if (servicesEntity.isEmpty()) return _errorControlUtilities.handleSuccess(null, 24L);
         log.info("END SEARCH BY PRINCIPAL PRODUCT");
         String serviceName = servicesEntity.get().getName();
         String sizeName = serviceName + " " + inventoryDto.getReference();
         InventoryEntity existingEntity = inventory.get();
-        if (!existingEntity.getProductCode().equals(inventoryDto.getProductCode())) return _errorControlUtilities.handleSuccess(null, 22L);
+        if (!existingEntity.getProductCode().equals(inventoryDto.getProductCode())) return _errorControlUtilities.handleSuccess(null, 16L);
         existingEntity.setProductCode(inventory.get().getProductCode());
         existingEntity.setName(sizeName);
         existingEntity.setReference(inventoryDto.getReference());
@@ -147,7 +147,7 @@ public class InventoryImpl implements IInventoryService {
 //        log.info("SE INICIA VERIFICACIÓN DE EXISTENCIA");
 //        List<InventoryEntity> existingEntities = _inventoryConsultations.findAllByIds(
 //                inventoryEntities.stream().map(InventoryEntity::getId).toList());
-//        if (existingEntities.size() != inventoryEntities.size()) return _errorControlUtilities.handleSuccess(null, 22L);
+//        if (existingEntities.size() != inventoryEntities.size()) return _errorControlUtilities.handleSuccess(null, 19L);
 //        for (InventoryEntity existingEntity : existingEntities) {
 //            Optional<InventoryEntity> newEntity = inventoryEntities.stream()
 //                    .filter(ent -> ent.getId().equals(existingEntity.getId()))
@@ -170,7 +170,7 @@ public class InventoryImpl implements IInventoryService {
         InventoryDto inventoryDto = EncoderUtilities.decodeRequest(encode, InventoryDto.class);
         EncoderUtilities.validator(inventoryDto);
         Optional<InventoryEntity> inventoryEntity = _inventoryConsultations.findByProductCode(inventoryDto.getProductCode());
-        if (inventoryEntity.isEmpty()) return _errorControlUtilities.handleSuccessList(null, 36L);
+        if (inventoryEntity.isEmpty()) return _errorControlUtilities.handleSuccessList(null, 24L);
         List<EntriesEntity> entries = inventoryEntity.get().getEntries();
         log.info("SEARCH FOR ENTRIES IS ENDED");
         return _errorControlUtilities.handleSuccessList(entries, 1L);
@@ -183,7 +183,7 @@ public class InventoryImpl implements IInventoryService {
         InventoryDto inventoryDto = EncoderUtilities.decodeRequest(encode, InventoryDto.class);
         EncoderUtilities.validator(inventoryDto);
         Optional<InventoryEntity> inventoryEntity = _inventoryConsultations.findByProductCode(inventoryDto.getProductCode());
-        if (inventoryEntity.isEmpty()) return _errorControlUtilities.handleSuccessList(null, 36L);
+        if (inventoryEntity.isEmpty()) return _errorControlUtilities.handleSuccessList(null, 24L);
         List<ExitsEntity> exits = inventoryEntity.get().getExits();
         log.info("SEARCH FOR EXITS IS ENDED");
         return _errorControlUtilities.handleSuccessList(exits, 1L);
@@ -192,7 +192,7 @@ public class InventoryImpl implements IInventoryService {
     @Override
     public void handleEntry(String productId, Long quantity, BigDecimal purchasePrice, String updateUser) {
         if (quantity <= 0) {
-            _errorControlUtilities.handleSuccess(null, 47L);
+            _errorControlUtilities.handleSuccess(null, 17L);
             return;
         }
         Optional<InventoryEntity> inventoryOpt = _inventoryConsultations.findByProductCode(productId);
@@ -209,7 +209,7 @@ public class InventoryImpl implements IInventoryService {
             inventory.setUpdateUser(updateUser);
             inventory.setLastEntryDate(new Date().toString());
             _inventoryConsultations.updateData(inventory);
-        } else _errorControlUtilities.handleSuccessList(null, 36L);
+        } else _errorControlUtilities.handleSuccessList(null, 24L);
     }
 
 
@@ -218,24 +218,24 @@ public class InventoryImpl implements IInventoryService {
     @Override
     public void handleExit(String productId, Long quantity, String updateUser) {
         if (quantity <= 0) {
-            _errorControlUtilities.handleSuccess(null, 47L);
+            _errorControlUtilities.handleSuccess(null, 17L);
             return;
         }
         Optional<InventoryEntity> inventoryOpt = _inventoryConsultations.findByProductCode(productId);
         if (inventoryOpt.isPresent()) {
             InventoryEntity inventory = inventoryOpt.get();
-            if (inventory.getPendingStock() < quantity) _errorControlUtilities.handleSuccess(null, 24L);
+            if (inventory.getPendingStock() < quantity) _errorControlUtilities.handleSuccess(null, 17L);
             inventory.setPendingStock(inventory.getPendingStock() - quantity.intValue());
             inventory.setUpdateUser(updateUser);
             inventory.setLastExitDate(new Date().toString());
             _inventoryConsultations.updateData(inventory);
-        } else _errorControlUtilities.handleSuccess(null, 36L);
+        } else _errorControlUtilities.handleSuccess(null, 24L);
     }
 
     @Override
     public void stockReturned(String productId, Long quantity, String updateUser) {
         if (quantity <= 0) {
-            _errorControlUtilities.handleSuccess(null, 47L);
+            _errorControlUtilities.handleSuccess(null, 17L);
             return;
         }
         Optional<InventoryEntity> inventoryOpt = _inventoryConsultations.findByProductCode(productId);
@@ -248,13 +248,13 @@ public class InventoryImpl implements IInventoryService {
             inventory.setLastEntryDate(new Date().toString());
             inventory.setUpdateUser(updateUser);
             _inventoryConsultations.updateData(inventory);
-        } else _errorControlUtilities.handleSuccess(null, 36L);
+        } else _errorControlUtilities.handleSuccess(null, 24L);
     }
 
     @Override
     public void stockExit(String productId, Long quantity, String updateUser) {
         if (quantity <= 0) {
-            _errorControlUtilities.handleSuccess(null, 47L);
+            _errorControlUtilities.handleSuccess(null, 17L);
             return;
         }
         Optional<InventoryEntity> inventoryOpt = _inventoryConsultations.findByProductCode(productId);
@@ -262,7 +262,7 @@ public class InventoryImpl implements IInventoryService {
         if (inventoryOpt.isPresent()) {
             InventoryEntity inventory = inventoryOpt.get();
             if (inventory.getStock() < quantity) {
-                _errorControlUtilities.handleSuccess(null, 24L);
+                _errorControlUtilities.handleSuccess(null, 17L);
                 return;
             }
             inventory.setStock(inventory.getStock() - quantity.intValue());
@@ -272,21 +272,21 @@ public class InventoryImpl implements IInventoryService {
             inventory.setUpdateUser(updateUser);
             _inventoryConsultations.updateData(inventory);
         } else {
-            _errorControlUtilities.handleSuccess(null, 36L);
+            _errorControlUtilities.handleSuccess(null, 24L);
         }
     }
 
     @Override
     public void stockAdjustment(String productId, Long quantity, String updateUser) {
         if (quantity <= 0) {
-            _errorControlUtilities.handleSuccess(null, 47L);
+            _errorControlUtilities.handleSuccess(null, 17L);
             return;
         }
         Optional<InventoryEntity> inventoryOpt = _inventoryConsultations.findByProductCode(productId);
         if (inventoryOpt.isPresent()) {
             InventoryEntity inventory = inventoryOpt.get();
             if (inventory.getStock() < quantity) {
-                _errorControlUtilities.handleSuccess(null, 24L);
+                _errorControlUtilities.handleSuccess(null, 17L);
                 return;
             }
             inventory.setStock(inventory.getStock() - quantity.intValue());
@@ -295,7 +295,7 @@ public class InventoryImpl implements IInventoryService {
             inventory.setUpdateUser("SYSTEM");
             _inventoryConsultations.updateData(inventory);
         } else {
-            _errorControlUtilities.handleSuccess(null, 36L);
+            _errorControlUtilities.handleSuccess(null, 24L);
         }
     }
 

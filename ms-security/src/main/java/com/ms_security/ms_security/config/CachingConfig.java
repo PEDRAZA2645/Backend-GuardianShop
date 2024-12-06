@@ -83,7 +83,7 @@ public class CachingConfig {
                 "CategoryFindByName",
                 "CartFindById",
                 "CartFindAll",
-                "CartFindByUserId",
+                "CartFindByUserName",
                 "OrderFindById",
                 "OrderFindAll",
                 "OrderMaxNumber",

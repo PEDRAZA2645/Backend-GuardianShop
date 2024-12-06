@@ -87,4 +87,14 @@ public class CartController {
         return cartService.deleteCart(entity);
     }
 
+    @Operation(description = "CHECK IF USER HAS AN EXISTING CART")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "SUCCESSFUL OPERATION", content = @Content(schema = @Schema(implementation = ResponseEntity.class))),
+            @ApiResponse(responseCode = "400", description = "GENERAL ERROR", content = @Content(schema = @Schema(implementation = ResponseEntity.class)))
+    })
+    @PostMapping(path = "/findCartByUser", produces = {"application/json"})
+    public ResponseEntity<String> checkIfUserHasCart(@RequestBody String encodedUserId) {
+        return cartService.checkIfUserHasCart(encodedUserId);
+    }
+
 }

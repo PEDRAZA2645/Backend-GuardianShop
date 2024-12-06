@@ -98,9 +98,9 @@ public class ExitsImpl implements IExitsServices {
         ExitsDto exitsDto = EncoderUtilities.decodeRequest(encode, ExitsDto.class);
         EncoderUtilities.validator(exitsDto);
         log.info("DECODED EXITS DTO: {}", EncoderUtilities.formatJson(exitsDto));
-        Optional<OrderEntity> exitsEntity = _orderConsultations.findByOrderNumber(exitsDto.getOrderNumber());
+        Optional<OrderEntity> orderEntity = _orderConsultations.findByOrderNumber(exitsDto.getOrderNumber());
         log.warn("ORDER ALREADY EXISTS FOR ORDER NUMBER: {}", exitsDto.getOrderNumber());
-        if (exitsEntity.isPresent()) return _errorControlUtilities.handleSuccess(null, 29L);
+        if (orderEntity.isPresent()) return _errorControlUtilities.handleSuccess(null, 20L);
         ExitsEntity entity = parseEnt(exitsDto, new ExitsEntity());
         Long nextOrderNumber = _exitsConsultations.findMaxConsecutive() + 1;
         log.info("NEXT ORDER NUMBER FOR EXIT ITEM: {}", nextOrderNumber);
@@ -139,15 +139,15 @@ public class ExitsImpl implements IExitsServices {
         ExitsEntity existingEntity = existingExitsEntityOpt.get();
         log.info("FOUND EXISTING EXITS ENTITY: {}", EncoderUtilities.formatJson(existingEntity));
         log.warn("PRODUCT ID MISMATCH: EXISTING={} NEW={}", existingEntity.getProductId(), exitsDto.getProductId());
-        if (!Objects.equals(existingEntity.getProductId(), exitsDto.getProductId())) return _errorControlUtilities.handleSuccess(null, 48L);
+        if (!Objects.equals(existingEntity.getProductId(), exitsDto.getProductId())) return _errorControlUtilities.handleSuccess(null, 31L);
         Optional<InventoryEntity> inventory = _inventoryConsultations.findById(existingEntity.getProductId());
         log.warn("INVENTORY NOT FOUND FOR PRODUCT ID: {}", existingEntity.getProductId());
         if (inventory.isEmpty()) return _errorControlUtilities.handleSuccess(null, 3L);
         _inventoryService.handleEntry(inventory.get().getProductCode(), existingEntity.getQuantity(), existingEntity.getCost(), exitsDto.getUpdateUser());
         log.info("HANDLED ENTRY FOR PRODUCT: {}", inventory.get().getProductCode());
-        Optional<OrderEntity> exits = _orderConsultations.findByOrderNumber(exitsDto.getOrderNumber());
+        Optional<OrderEntity> orderEntity = _orderConsultations.findByOrderNumber(exitsDto.getOrderNumber());
         log.warn("ORDER ALREADY EXISTS FOR ORDER NUMBER: {}", exitsDto.getOrderNumber());
-        if (exits.isPresent()) return _errorControlUtilities.handleSuccess(null, 29L);
+        if (orderEntity.isPresent()) return _errorControlUtilities.handleSuccess(null, 20L);
         ExitsEntity exitEntity = parseEnt(exitsDto, existingExitsEntityOpt.get());
         exitEntity.setUpdateUser(exitsDto.getUpdateUser());
         exitEntity.setDateTimeUpdate(new Date().toString());
@@ -179,7 +179,7 @@ public class ExitsImpl implements IExitsServices {
         OrderEntity orderEntity = orderEntityOpt.get();
         log.info("FOUND ORDER ENTITY: {}", EncoderUtilities.formatJson(orderEntity));
         log.warn("ORDER STATUS IS NOT PAID: {}", orderEntity.getStatus());
-        if (!"PAID".equalsIgnoreCase(orderEntity.getStatus())) return _errorControlUtilities.handleSuccess(null, 39L);
+        if (!"PAID".equalsIgnoreCase(orderEntity.getStatus())) return _errorControlUtilities.handleSuccess(null, 25L);
         List<OrderItemEntity> orderItems = orderEntity.getItems();
         log.info("PROCESSING {} ORDER ITEMS.", orderItems.size());
         for (OrderItemEntity item : orderItems) {

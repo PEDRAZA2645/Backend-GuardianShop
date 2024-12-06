@@ -115,6 +115,7 @@ public class CartImpl implements ICartService {
     public ResponseEntity<String> addToCart(String encode) {
         EncoderUtilities.validateBase64(encode);
         CartRequestDto cartRequest = EncoderUtilities.decodeRequest(encode, CartRequestDto.class);
+        log.info("inventoryId: {}", cartRequest.getInventoryId());
         if (cartRequest.getQuantity() < 0) return _errorControlUtilities.handleSuccess(null, 47L);
         log.info("START SEARCH FOR INVENTORY STOCK");
         Optional<InventoryEntity> inventoryEntity = _inventoryConsultations.findById(cartRequest.getInventoryId());
@@ -141,7 +142,7 @@ public class CartImpl implements ICartService {
                 OrderItemEntity newItem = new OrderItemEntity();
                 newItem.setName(inventory.getName());
                 newItem.setCartId(cartEntity.getId());
-                newItem.setProduct(inventory);
+                newItem.setProductId(cartRequest.getInventoryId());
                 newItem.setQuantity(cartRequest.getQuantity());
                 newItem.setPrice(inventory.getSalePrice());
                 newItem.setCreateUser(cartRequest.getCreateUser());
@@ -182,12 +183,12 @@ public class CartImpl implements ICartService {
         log.info("REMOVING ITEM FROM CART BEGINS");
         CartDto cartDto = EncoderUtilities.decodeRequest(encode, CartDto.class);
         Optional<CartEntity> optionalCartEntity = _cartConsultations.findById(cartDto.getId());
-        if (optionalCartEntity.isEmpty()) return _errorControlUtilities.handleSuccess(null, 25L);
+        if (optionalCartEntity.isEmpty()) return _errorControlUtilities.handleSuccess(null, 18L);
         CartEntity cartEntity = optionalCartEntity.get();
         Long itemIdToRemove = cartDto.getItems().get(0).getId();
         boolean itemExists = cartEntity.getItems().stream()
                 .anyMatch(item -> item.getId().equals(itemIdToRemove));
-        if (!itemExists) return _errorControlUtilities.handleSuccess(null, 26L);
+        if (!itemExists) return _errorControlUtilities.handleSuccess(null, 19L);
         cartEntity.getItems().removeIf(item -> item.getId().equals(itemIdToRemove));
         log.info("ITEM REMOVED FROM CART");
         cartEntity.setUpdateUser(cartDto.getUpdateUser());
@@ -223,7 +224,7 @@ public class CartImpl implements ICartService {
     public ResponseEntity<String> deleteAllPendingCarts() {
         log.info("DELETING ALL PENDING CARTS BEGINS");
         List<CartEntity> pendingCarts = _cartConsultations.findAllByStatus("PENDING");
-        if (pendingCarts.isEmpty()) return _errorControlUtilities.handleSuccess(null, 26L);
+        if (pendingCarts.isEmpty()) return _errorControlUtilities.handleSuccess(null, 19L);
         log.info("START UPDATING PENDING CART STATUS");
         for (CartEntity cart : pendingCarts) {
             log.info("PROCESSING CART ID: " + cart.getId());
@@ -237,7 +238,28 @@ public class CartImpl implements ICartService {
         return _errorControlUtilities.handleSuccess(null, 1L);
     }
 
-
+    @Override
+    public ResponseEntity<String> checkIfUserHasCart(String encode) {
+        log.info("PROCEED TO CHECK IF USER HAS AN EXISTING CART");
+        EncoderUtilities.validateBase64(encode);
+        CartDto userDto = EncoderUtilities.decodeRequest(encode, CartDto.class);
+        EncoderUtilities.validator(userDto);
+        log.info(EncoderUtilities.formatJson(userDto));
+        List<CartEntity> userCarts = _cartConsultations.findCartsByUserId(userDto.getUserId());
+        Optional<CartEntity> pendingCart = userCarts.stream()
+                .filter(cart -> "PENDING".equals(cart.getStatus()))
+                .findFirst();
+        String responseMessage;
+        if (pendingCart.isPresent()) {
+            Long cartId = pendingCart.get().getId();
+            log.info("USER WITH ID {} HAS AN EXISTING PENDING CART WITH ID {}", userDto.getUserId(), cartId);
+            responseMessage = String.format("{\"message\": \"User has an existing pending cart\", \"cartId\": %d}", cartId);
+        } else {
+            log.info("USER WITH ID {} DOES NOT HAVE AN EXISTING PENDING CART", userDto.getUserId());
+            responseMessage = "{\"message\": \"User does not have an existing pending cart\", \"cartId\": 0}";
+        }
+        return _errorControlUtilities.handleSuccess(responseMessage, 1L);
+    }
 
 
     private CartDto parse(CartEntity entity) {

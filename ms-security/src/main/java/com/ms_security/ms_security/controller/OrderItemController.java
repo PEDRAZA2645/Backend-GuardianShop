@@ -2,6 +2,7 @@ package com.ms_security.ms_security.controller;
 
 import com.ms_security.ms_security.service.IOrderItemService;
 import com.ms_security.ms_security.service.model.dto.CartValidationRequestDto;
+import com.ms_security.ms_security.service.model.dto.FindByIdDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -81,4 +82,13 @@ public class OrderItemController {
         return orderItemService.findByCartIdAndCreateUser(requestDto.getCreateUser(), requestDto.getCartId());
     }
 
+    @Operation(description = "LIST ITEMS BY CART ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "SUCCESSFUL OPERATION", content = @Content(schema = @Schema(implementation = ResponseEntity.class))),
+            @ApiResponse(responseCode = "400", description = "GENERAL ERROR", content = @Content(schema = @Schema(implementation = ResponseEntity.class)))
+    })
+    @PostMapping(path = "/list/cart", produces = {"application/json"})
+    public ResponseEntity<String> findByCartId(@RequestBody CartValidationRequestDto requestDto) {
+        return orderItemService.findByCartId(requestDto.getCartId());
+    }
 }

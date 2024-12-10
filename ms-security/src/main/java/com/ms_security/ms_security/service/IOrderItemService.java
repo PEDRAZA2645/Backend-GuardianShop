@@ -12,5 +12,6 @@ public interface IOrderItemService {
 //    ResponseEntity<String> addNew(String encode);
     ResponseEntity<String> updateData(String encode);
     ResponseEntity<String> deleteById(String encode);
-    public ResponseEntity<String> findByCartIdAndCreateUser(String username, Long cartId);
+    ResponseEntity<String> findByCartIdAndCreateUser(String username, Long cartId);
+    ResponseEntity<String> findByCartId(Long cartId);
 }

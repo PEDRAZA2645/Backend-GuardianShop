@@ -15,4 +15,6 @@ public interface IOrderItemRepository extends JpaRepository<OrderItemEntity, Lon
     Optional<OrderItemEntity> findByProductIdAndCartId(Long productId, Long cartId);
     List<OrderItemEntity> findByOrderId(Long orderId);
     boolean existsByCartIdAndCreateUser(Long cartId, String createUser);
+
+    List<OrderItemEntity> findByCartId(Long cartId);
 }

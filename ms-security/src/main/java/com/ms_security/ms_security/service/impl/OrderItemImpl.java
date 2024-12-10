@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +23,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Log4j2
 @Service
@@ -132,16 +134,28 @@ public class OrderItemImpl implements IOrderItemService {
     @Override
     public ResponseEntity<String> findByCartIdAndCreateUser(String createUser, Long cartId) {
         log.info("Validating if the cart exists for user: {} and cartId: {}", createUser, cartId);
-
         boolean exists = _orderItemConsultations.existsByCartIdAndCreateUser(cartId, createUser);
-
         if (!exists) {
             log.warn("No cart found for user: {} and cartId: {}", createUser, cartId);
             return _errorControlUtilities.handleSuccess(false, 32L);
         }
-
         log.info("Cart found for user: {} and cartId: {}", createUser, cartId);
         return _errorControlUtilities.handleSuccess(true, 1L);
+    }
+
+    @Override
+    public ResponseEntity<String> findByCartId(Long cartId) {
+        log.info("Buscando elementos del carrito con ID: {}", cartId);
+        List<OrderItemEntity> orderItems = _orderItemConsultations.findByCartId(cartId);
+        if (orderItems.isEmpty()) {
+            log.warn("No se encontraron elementos para el carrito ID: {}", cartId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontraron elementos para el carrito especificado.");
+        }
+        List<OrderItemDto> orderItemDtos = orderItems.stream()
+                .map(this::parse)
+                .collect(Collectors.toList());
+        log.info("Se encontraron {} elementos para el carrito ID: {}", orderItemDtos.size(), cartId);
+        return _errorControlUtilities.handleSuccess(orderItemDtos, 1L);
     }
 
     /**

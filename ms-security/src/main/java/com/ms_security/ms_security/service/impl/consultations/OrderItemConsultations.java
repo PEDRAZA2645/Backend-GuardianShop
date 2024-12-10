@@ -74,6 +74,10 @@ public class OrderItemConsultations {
         return _orderItemRepository.existsByCartIdAndCreateUser(cartId, createUser);
     }
 
-
+    @Cacheable(value = "OrderItemFindById", key = "#id")
+    @Transactional(readOnly = true)
+    public List<OrderItemEntity> findByCartId(Long id) {
+        return _orderItemRepository.findByCartId(id);
+    }
 
 }

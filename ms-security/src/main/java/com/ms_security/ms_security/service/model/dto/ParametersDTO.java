@@ -4,9 +4,11 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
+
 @Getter
 @Setter
-public class ParametersDTO {
+public class ParametersDTO implements Serializable {
 
     private Long id;
     @NotNull(groups = ParametersDTOFindByCode.class)

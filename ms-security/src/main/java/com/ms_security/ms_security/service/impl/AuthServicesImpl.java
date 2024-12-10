@@ -8,27 +8,26 @@ import com.ms_security.ms_security.service.IEmailService;
 import com.ms_security.ms_security.service.IJWTUtilityService;
 import com.ms_security.ms_security.service.impl.consultations.RoleConsultations;
 import com.ms_security.ms_security.service.impl.consultations.UserConsultations;
-import com.ms_security.ms_security.service.model.dto.*;
+import com.ms_security.ms_security.service.model.dto.ChangePasswordDto;
+import com.ms_security.ms_security.service.model.dto.EmailDto;
+import com.ms_security.ms_security.service.model.dto.LoginDto;
+import com.ms_security.ms_security.service.model.dto.ResponseErrorDto;
 import com.ms_security.ms_security.service.model.validation.UserValidation;
-import com.ms_security.ms_security.utilities.EncoderUtilities;
-import com.ms_security.ms_security.utilities.ErrorControlUtilities;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.JWTClaimsSet;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.context.Context;
-import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -48,6 +47,7 @@ public class AuthServicesImpl implements IAuthServices {
     private final IJWTUtilityService _jwtUtilityService;
     private final IEmailService _emailService;
     private final UserValidation _userValidation;
+    private final RoleConsultations _roleConsultations;
 
     /**
      * Logs in a user by validating their credentials and generating a JWT.
@@ -111,13 +111,19 @@ public class AuthServicesImpl implements IAuthServices {
     public ResponseErrorDto register(UserEntity user) throws Exception {
         try {
             ResponseErrorDto response = _userValidation.validate(user);
-            if (response.getNumOfErrors() > 0) {
-                return response;
-            }
+            if (response.getNumOfErrors() > 0) return response;
             Optional<UserEntity> existingUser = _userConsultations.findByEmail(user.getEmail());
             if (existingUser.isPresent()) {
                 response.setNumOfErrors(1);
                 response.setMessage("User already exists!");
+                return response;
+            }
+            // Asigna el rol por defecto (con ID 3)
+            Optional<RoleEntity> defaultRole = _roleConsultations.findById(3L);
+            if (defaultRole.isPresent()) user.getRoles().add(defaultRole.get());
+            else {
+                response.setNumOfErrors(1);
+                response.setMessage("Default role not found!");
                 return response;
             }
             BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);

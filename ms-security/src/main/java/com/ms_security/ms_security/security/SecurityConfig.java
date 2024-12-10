@@ -69,7 +69,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(source))
                 .authorizeHttpRequests(authRequests ->
                         authRequests
-                                .requestMatchers("/auth/**", "/form/list/id", "/form/list/all", "/services/list/all", "/carts/findCartByUser", "/services/inventory").permitAll()
+                                .requestMatchers("/auth/**", "/form/addRecord", "/form/updateRecord", "/services/list/all", "/carts/findCartByUser", "/services/inventory").permitAll()
                                 .requestMatchers("/permission/**", "/role/**", "/users/list/all", "/users/addRecord", "/users/updateRecord", "/users/list/roles")
                                 .hasRole("ADMIN")
                                 .anyRequest().authenticated()

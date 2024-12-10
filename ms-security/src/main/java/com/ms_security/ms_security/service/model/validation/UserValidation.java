@@ -51,7 +51,7 @@ public class UserValidation {
      * @return true if the name is invalid, false otherwise
      */
     private boolean isInvalidName(String name) {
-        return name == null || name.length() < 3 || name.length() > 15;
+        return name == null || name.length() < 3 || name.length() > 50;
     }
 
     /**

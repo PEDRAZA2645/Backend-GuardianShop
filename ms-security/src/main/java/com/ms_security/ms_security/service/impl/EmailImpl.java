@@ -31,7 +31,7 @@ public class EmailImpl implements IEmailService {
      * @throws MessagingException If there is an error creating or sending the email.
      */
     @Override
-    public void sendEmail(EmailDto email) throws MessagingException {
+    public void sendEmail(EmailDto email, String templateName) throws MessagingException {
         try {
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -40,7 +40,7 @@ public class EmailImpl implements IEmailService {
             Context context = new Context();
             context.setVariable("message", email.getMessage());
             context.setVariable("resetLink", email.getResetLink());
-            String contentHTML = templateEngine.process("email", context);
+            String contentHTML = templateEngine.process(templateName, context);
             helper.setText(contentHTML, true);
             javaMailSender.send(message);
         } catch (Exception e) {

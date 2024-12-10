@@ -67,4 +67,13 @@ public class OrderItemConsultations {
         return _orderItemRepository.findByOrderId(orderId);
     }
 
+    @Cacheable(value = "OrderItemFindByCartAndUser", key = "#cartId + '-' + #username")
+    @Transactional(readOnly = true)
+    public boolean existsByCartIdAndCreateUser(Long cartId, String createUser) {
+        log.info("Searching for OrderItems with Cart ID: {} and Username: {}", cartId, createUser);
+        return _orderItemRepository.existsByCartIdAndCreateUser(cartId, createUser);
+    }
+
+
+
 }

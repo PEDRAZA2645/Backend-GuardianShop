@@ -144,18 +144,25 @@ public class OrderItemImpl implements IOrderItemService {
     }
 
     @Override
-    public ResponseEntity<String> findByCartId(Long cartId) {
-        log.info("Buscando elementos del carrito con ID: {}", cartId);
-        List<OrderItemEntity> orderItems = _orderItemConsultations.findByCartId(cartId);
-        if (orderItems.isEmpty()) {
+    public ResponseEntity<String> findByCartId(Long cartId, int page, int size) {
+        log.info("Buscando elementos del carrito con ID: {} con paginación", cartId);
+
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<OrderItemEntity> orderItemsPage = _orderItemConsultations.findByCartId(cartId, pageable);
+
+        if (orderItemsPage.isEmpty()) {
             log.warn("No se encontraron elementos para el carrito ID: {}", cartId);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontraron elementos para el carrito especificado.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("No se encontraron elementos para el carrito especificado.");
         }
-        List<OrderItemDto> orderItemDtos = orderItems.stream()
+
+        List<OrderItemDto> orderItemDtos = orderItemsPage.getContent().stream()
                 .map(this::parse)
                 .collect(Collectors.toList());
-        log.info("Se encontraron {} elementos para el carrito ID: {}", orderItemDtos.size(), cartId);
-        return _errorControlUtilities.handleSuccess(orderItemDtos, 1L);
+
+        PageImpl<OrderItemDto> response = new PageImpl<>(orderItemDtos, pageable, orderItemsPage.getTotalElements());
+        log.info("Se encontraron {} elementos paginados para el carrito ID: {}", orderItemDtos.size(), cartId);
+        return _errorControlUtilities.handleSuccess(response, 1L);
     }
 
     /**

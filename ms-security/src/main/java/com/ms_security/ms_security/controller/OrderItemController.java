@@ -1,6 +1,7 @@
 package com.ms_security.ms_security.controller;
 
 import com.ms_security.ms_security.service.IOrderItemService;
+import com.ms_security.ms_security.service.model.dto.CartPaginationRequestDto;
 import com.ms_security.ms_security.service.model.dto.CartValidationRequestDto;
 import com.ms_security.ms_security.service.model.dto.FindByIdDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -88,7 +89,7 @@ public class OrderItemController {
             @ApiResponse(responseCode = "400", description = "GENERAL ERROR", content = @Content(schema = @Schema(implementation = ResponseEntity.class)))
     })
     @PostMapping(path = "/list/cart", produces = {"application/json"})
-    public ResponseEntity<String> findByCartId(@RequestBody CartValidationRequestDto requestDto) {
-        return orderItemService.findByCartId(requestDto.getCartId());
+    public ResponseEntity<String> findByCartId(@RequestBody CartPaginationRequestDto request) {
+        return orderItemService.findByCartId(request.getCartId(), request.getPage(), request.getSize());
     }
 }

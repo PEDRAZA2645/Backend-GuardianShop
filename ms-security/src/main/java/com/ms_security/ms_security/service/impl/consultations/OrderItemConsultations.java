@@ -76,8 +76,8 @@ public class OrderItemConsultations {
 
     @Cacheable(value = "OrderItemFindById", key = "#id")
     @Transactional(readOnly = true)
-    public List<OrderItemEntity> findByCartId(Long id) {
-        return _orderItemRepository.findByCartId(id);
+    public Page<OrderItemEntity> findByCartId(Long cartId, Pageable pageable) {
+        return _orderItemRepository.findByCartId(cartId, pageable);
     }
 
 }

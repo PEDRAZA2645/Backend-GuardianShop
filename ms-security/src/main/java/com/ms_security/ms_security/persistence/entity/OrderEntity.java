@@ -43,6 +43,13 @@ public class OrderEntity {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JsonIgnore
     private List<OrderItemEntity> items;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "USER_ID", insertable = false, updatable = false)
+    @JsonIgnore
+    private UserEntity user;
+
+    @Column(name = "USER_ID", nullable = false)
+    private Long userId;
 
     @Column(name = "CREATE_USER")
     private String createUser;

@@ -97,21 +97,22 @@ public class OrderItemImpl implements IOrderItemService {
         Optional<OrderItemEntity> existingOrderItemEntity = _orderItemConsultations.findById(orderItemDto.getId());
         if (existingOrderItemEntity.isEmpty()) return _errorControlUtilities.handleSuccess(null, 3L);
         Long requestedQuantity = orderItemDto.getQuantity();
-//        Optional<InventoryEntity> inventoryOpt = _inventoryConsultations.findByProductCode(orderItemDto.getProductId());
-//        if (inventoryOpt.isPresent()) {
-//            InventoryEntity inventory = inventoryOpt.get();
-//            Long availableStock = inventory.getStock();
-//            if (availableStock < requestedQuantity) { return _errorControlUtilities.handleSuccess(null, 30L);
-//        } else return _errorControlUtilities.handleSuccess(null, 24L);
+
         OrderItemEntity updatedOrderItemEntity = parseEnt(orderItemDto, existingOrderItemEntity.get());
         updatedOrderItemEntity.setPrice(BigDecimal.valueOf(orderItemDto.getQuantity()).multiply(orderItemDto.getPrice()));
         updatedOrderItemEntity.setUpdateUser(orderItemDto.getUpdateUser());
         updatedOrderItemEntity.setDateTimeUpdate(new Date().toString());
-        OrderItemEntity updatedOrderItem = _orderItemConsultations.updateData(updatedOrderItemEntity);
+
         if (requestedQuantity <= 0) {
             _orderItemConsultations.deleteById(orderItemDto.getId());
-            return _errorControlUtilities.handleSuccess(null, 1L);
+            List<OrderItemEntity> remainingItems = _orderItemConsultations.findByCartId(orderItemDto.getCartId()); // Suponiendo que tienes este método
+            List<OrderItemDto> remainingItemsDto = remainingItems.stream()
+                    .map(this::parse)
+                    .collect(Collectors.toList());
+            return _errorControlUtilities.handleSuccess(remainingItemsDto, 1L);
         }
+
+        OrderItemEntity updatedOrderItem = _orderItemConsultations.updateData(updatedOrderItemEntity);
         OrderItemDto updatedOrderItemDto = parse(updatedOrderItem);
         log.info("UPDATE ORDER ITEM ENDED");
         return _errorControlUtilities.handleSuccess(updatedOrderItemDto, 1L);
@@ -146,20 +147,16 @@ public class OrderItemImpl implements IOrderItemService {
     @Override
     public ResponseEntity<String> findByCartId(Long cartId, int page, int size) {
         log.info("Buscando elementos del carrito con ID: {} con paginación", cartId);
-
         Pageable pageable = PageRequest.of(page - 1, size);
-        Page<OrderItemEntity> orderItemsPage = _orderItemConsultations.findByCartId(cartId, pageable);
-
+        Page<OrderItemEntity> orderItemsPage = _orderItemConsultations.findByCartIdPage(cartId, pageable);
         if (orderItemsPage.isEmpty()) {
             log.warn("No se encontraron elementos para el carrito ID: {}", cartId);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("No se encontraron elementos para el carrito especificado.");
         }
-
         List<OrderItemDto> orderItemDtos = orderItemsPage.getContent().stream()
                 .map(this::parse)
                 .collect(Collectors.toList());
-
         PageImpl<OrderItemDto> response = new PageImpl<>(orderItemDtos, pageable, orderItemsPage.getTotalElements());
         log.info("Se encontraron {} elementos paginados para el carrito ID: {}", orderItemDtos.size(), cartId);
         return _errorControlUtilities.handleSuccess(response, 1L);

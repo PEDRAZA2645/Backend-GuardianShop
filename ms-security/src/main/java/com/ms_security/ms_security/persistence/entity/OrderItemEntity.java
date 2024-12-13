@@ -40,9 +40,12 @@ public class OrderItemEntity {
     private Long productId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ORDER_ID")
+    @JoinColumn(name = "ORDER_ID", insertable = false, updatable = false)
     @JsonIgnore
     private OrderEntity order;
+
+    @Column(name = "ORDER_ID")
+    private Long orderId;
 
     @Column(name = "QUANTITY")
     private Long quantity;

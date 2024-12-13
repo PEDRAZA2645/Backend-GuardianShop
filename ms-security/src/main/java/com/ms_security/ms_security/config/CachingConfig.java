@@ -95,6 +95,8 @@ public class CachingConfig {
                 "OrderItemFindByProductAndCart",
                 "OrderItemFindByOrderId",
                 "OrderItemFindByCartAndUser",
+                "OrderItemFindByCartIdPage",
+                "OrderItemFindByCartId",
                 "EntriesFindById",
                 "EntriesFindAll",
                 "EntriesFindByInvoiceNumber",

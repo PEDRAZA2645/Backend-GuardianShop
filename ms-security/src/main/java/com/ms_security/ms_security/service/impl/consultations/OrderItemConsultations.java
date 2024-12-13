@@ -35,19 +35,19 @@ public class OrderItemConsultations {
         return _orderItemRepository.findAll(pageable);
     }
 
-    @CacheEvict(value = {"OrderItemFindById", "OrderItemFindAll", "OrderItemFindByProductAndCart"}, allEntries = true)
+    @CacheEvict(value = {"OrderItemFindById", "OrderItemFindAll", "OrderItemFindByProductAndCart", "OrderItemFindByCartId"}, allEntries = true)
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, rollbackFor = Exception.class)
     public OrderItemEntity addNew(OrderItemEntity entity) {
         return _orderItemRepository.save(entity);
     }
 
-    @CacheEvict(value = {"OrderItemFindById", "OrderItemFindAll", "OrderItemFindByProductAndCart"}, allEntries = true)
+    @CacheEvict(value = {"OrderItemFindById", "OrderItemFindAll", "OrderItemFindByProductAndCart", "OrderItemFindByCartId"}, allEntries = true)
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, rollbackFor = Exception.class)
     public OrderItemEntity updateData(OrderItemEntity entity) {
         return _orderItemRepository.save(entity);
     }
 
-    @CacheEvict(value = {"OrderItemFindById", "OrderItemFindAll"}, allEntries = true)
+    @CacheEvict(value = {"OrderItemFindById", "OrderItemFindAll", "OrderItemFindByProductAndCart", "OrderItemFindByCartId"}, allEntries = true)
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, rollbackFor = Exception.class)
     public void deleteById(Long id) {
         _orderItemRepository.deleteById(id);
@@ -67,17 +67,23 @@ public class OrderItemConsultations {
         return _orderItemRepository.findByOrderId(orderId);
     }
 
-    @Cacheable(value = "OrderItemFindByCartAndUser", key = "#cartId + '-' + #username")
+    @Cacheable(value = "OrderItemFindByCartAndUser", key = "#cartId + '-' + #createUser")
     @Transactional(readOnly = true)
     public boolean existsByCartIdAndCreateUser(Long cartId, String createUser) {
         log.info("Searching for OrderItems with Cart ID: {} and Username: {}", cartId, createUser);
         return _orderItemRepository.existsByCartIdAndCreateUser(cartId, createUser);
     }
 
-    @Cacheable(value = "OrderItemFindById", key = "#id")
+    @Cacheable(value = "OrderItemFindByCartIdPage", key = "#cartId")
     @Transactional(readOnly = true)
-    public Page<OrderItemEntity> findByCartId(Long cartId, Pageable pageable) {
+    public Page<OrderItemEntity> findByCartIdPage(Long cartId, Pageable pageable) {
         return _orderItemRepository.findByCartId(cartId, pageable);
+    }
+
+    @Cacheable(value = "OrderItemFindByCartId", key = "#cartId")
+    @Transactional(readOnly = true)
+    public List<OrderItemEntity> findByCartId(Long cartId) {
+        return _orderItemRepository.findByCartId(cartId);
     }
 
 }

@@ -16,4 +16,5 @@ public interface IOrderItemRepository extends JpaRepository<OrderItemEntity, Lon
     List<OrderItemEntity> findByOrderId(Long orderId);
     boolean existsByCartIdAndCreateUser(Long cartId, String createUser);
     Page<OrderItemEntity> findByCartId(Long cartId, Pageable pageable);
+    List<OrderItemEntity> findByCartId(Long cartId);
 }

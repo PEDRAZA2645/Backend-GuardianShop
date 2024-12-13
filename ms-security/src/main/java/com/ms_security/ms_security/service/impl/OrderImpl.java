@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -98,6 +99,7 @@ public class OrderImpl implements IOrderService {
      * @param encode Base64 encoded request containing the details of the order item to be created.
      * @return A ResponseEntity object containing the created order item or an error message.
      */
+    @Transactional
     @Override
     public ResponseEntity<String> addNew(String encode) {
         EncoderUtilities.validateBase64(encode);
@@ -106,50 +108,53 @@ public class OrderImpl implements IOrderService {
         EncoderUtilities.validator(orderDto);
         log.info("DECODED ORDER DTO: " + EncoderUtilities.formatJson(orderDto));
         Long userId = orderDto.getUserId();
-        log.info("FETCHING CART FOR USER ID: " + userId);
+        log.info("FETCHING CART FOR USER ID AND STATUS: " + userId);
         Optional<CartEntity> cartEntityOptional = _cartConsultations.findByUserIdAndStatus(userId, "PENDING");
         if (cartEntityOptional.isPresent()) {
             CartEntity cartEntity = cartEntityOptional.get();
-            List<OrderItemEntity> cartItems = cartEntity.getItems();
+            Long cartId = cartEntity.getId();
+            List<OrderItemEntity> cartItems = _orderItemConsultations.findByCartId(cartId);
             log.info("NUMBER OF ITEMS IN CART: " + (cartItems != null ? cartItems.size() : 0));
             if (cartItems == null || cartItems.isEmpty()) return _errorControlUtilities.handleSuccess(null, 27L);
             OrderEntity orderEntity = parseEnt(orderDto, new OrderEntity());
             Long nextOrderNumber = _orderConsultations.findMaxOrderNumber() + 1;
             log.info("GENERATING NEXT ORDER NUMBER: " + nextOrderNumber);
             orderEntity.setOrderNumber(nextOrderNumber);
+            orderEntity.setUserId(userId);
             orderEntity.setCreateUser(orderDto.getCreateUser());
             orderEntity.setDateTimeCreation(new Date().toString());
             orderEntity.setDateTimeOrder(new Date().toString());
             orderEntity.setStatus("PENDING");
-            List<OrderItemEntity> orderItems = new ArrayList<>();
             BigDecimal totalOrderPrice = BigDecimal.ZERO;
-            for (OrderItemEntity itemDto : cartItems) {
-                log.info("PROCESSING ITEM: " + itemDto.getName());
-                OrderItemEntity orderItemEntity = new OrderItemEntity();
-                orderItemEntity.setName(itemDto.getName());
-                orderItemEntity.setQuantity(itemDto.getQuantity());
-                orderItemEntity.setPrice(itemDto.getPrice());
-                orderItemEntity.setProduct(itemDto.getProduct());
-                orderItemEntity.setCartId(itemDto.getCartId());
-                orderItemEntity.setUpdateUser(itemDto.getUpdateUser());
-                BigDecimal itemTotalPrice = itemDto.getPrice().multiply(new BigDecimal(itemDto.getQuantity()));
+            for (OrderItemEntity item : cartItems) {
+                log.info("PROCESSING ITEM: " + item.getName());
+                item.setOrderId(orderEntity.getId());
+                BigDecimal itemTotalPrice = item.getPrice().multiply(new BigDecimal(item.getQuantity()));
                 totalOrderPrice = totalOrderPrice.add(itemTotalPrice);
                 log.info("ITEM TOTAL PRICE: " + itemTotalPrice);
-                orderItemEntity.setOrder(orderEntity);
-                orderItems.add(orderItemEntity);
             }
-            orderEntity.setUnitPrice(orderItems.stream().findFirst().map(OrderItemEntity::getPrice).orElse(BigDecimal.ZERO));
-            orderEntity.setProductName(orderItems.stream().findFirst().map(OrderItemEntity::getName).orElse(""));
-            orderEntity.setQuantity(orderItems.stream().map(OrderItemEntity::getQuantity).reduce(0L, Long::sum));
-            orderEntity.setItems(orderItems);
+            orderEntity.setUnitPrice(cartItems.stream().findFirst().map(OrderItemEntity::getPrice).orElse(BigDecimal.ZERO));
+            orderEntity.setProductName(cartItems.stream().findFirst().map(OrderItemEntity::getName).orElse(""));
+            orderEntity.setQuantity(cartItems.stream().map(OrderItemEntity::getQuantity).reduce(0L, Long::sum));
+            orderEntity.setItems(cartItems);
             orderEntity.setTotalPrice(totalOrderPrice);
             log.info("TOTAL ORDER PRICE: " + totalOrderPrice);
             OrderEntity createdOrder = _orderConsultations.addNew(orderEntity);
             log.info("ORDER CREATED SUCCESSFULLY WITH ORDER NUMBER: " + createdOrder.getOrderNumber());
             OrderDto createdOrderDto = parse(createdOrder);
+            log.info("UPDATING ORDER NUMBER IN ITEMS");
+            for (OrderItemEntity orderItem : cartItems) {
+                orderItem.setOrderId(createdOrder.getId());
+                _orderItemConsultations.updateData(orderItem);
+            }
+            cartEntity.setStatus("FINISHED");
+            _cartConsultations.updateData(cartEntity);
+            log.info("GENERATE PDF FOR THE UPDATED ORDER");
+            generateOrderPdf(createdOrder, null, cartItems);
+            log.info("PDF GENERATED SUCCESSFULLY");
             log.info("INSERT ORDER ITEM ENDED");
             log.info("STARTING INVENTORY OUTPUT ");
-            for (OrderItemEntity orderItem : orderItems) {
+            for (OrderItemEntity orderItem : cartItems) {
                 Optional<InventoryEntity> optionalInventory = _inventoryConsultations.findById(orderItem.getProductId());
                 if (optionalInventory.isPresent()) {
                     InventoryEntity inventory = optionalInventory.get();
@@ -176,13 +181,15 @@ public class OrderImpl implements IOrderService {
         EncoderUtilities.validator(orderDto);
         log.info("DECODED ORDER DTO: " + EncoderUtilities.formatJson(orderDto));
         Long userId = orderDto.getUserId();
-        log.info("FETCHING CART FOR USER ID: " + userId);
+        log.info("SEARCH ORDER FOR ORDER NUMBER: " + orderDto.getOrderNumber());
         Optional<OrderEntity> entity = _orderConsultations.findByOrderNumber(orderDto.getOrderNumber());
         if (entity.isEmpty()) return _errorControlUtilities.handleSuccess(null, 21L);
+        log.info("FETCHING CART FOR USER ID: " + userId);
         Optional<CartEntity> cartEntityOptional = _cartConsultations.findByUserIdAndStatus(userId, "PENDING");
         if (cartEntityOptional.isPresent()) {
             CartEntity cartEntity = cartEntityOptional.get();
-            List<OrderItemEntity> cartItems = cartEntity.getItems();
+            Long cartId = cartEntity.getId();
+            List<OrderItemEntity> cartItems = _orderItemConsultations.findByCartId(cartId);
             log.info("NUMBER OF ITEMS IN CART: " + (cartItems != null ? cartItems.size() : 0));
             if (cartItems == null || cartItems.isEmpty()) return _errorControlUtilities.handleSuccess(null, 27L);
             OrderEntity orderEntity = parseEnt(orderDto, new OrderEntity());
@@ -191,6 +198,7 @@ public class OrderImpl implements IOrderService {
             orderEntity.setDateTimeUpdate(new Date().toString());
             orderEntity.setDateTimeOrder(entity.get().getDateTimeOrder());
             orderEntity.setStatus("PENDING");
+
             List<OrderItemEntity> orderItems = new ArrayList<>();
             BigDecimal totalOrderPrice = BigDecimal.ZERO;
             for (OrderItemEntity itemDto : cartItems) {
@@ -241,6 +249,10 @@ public class OrderImpl implements IOrderService {
             OrderEntity updatedOrder = _orderConsultations.updateData(orderEntity);
             log.info("ORDER UPDATED SUCCESSFULLY WITH ORDER NUMBER: " + updatedOrder.getOrderNumber());
             OrderDto updatedOrderDto = parse(updatedOrder);
+
+            log.info("GENERATE PDF FOR THE UPDATED ORDER");
+            generateOrderPdf(updatedOrder, null, orderItems);
+            log.info("PDF GENERATED SUCCESSFULLY");
             log.info("UPDATE ORDER ITEM ENDED");
             for (OrderItemEntity orderItem : orderItems) {
                 log.info("STARTING INVENTORY OUTPUT ");

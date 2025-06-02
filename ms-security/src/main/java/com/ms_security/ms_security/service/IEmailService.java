@@ -15,5 +15,5 @@ public interface IEmailService {
      * @param email An instance of EmailDto containing the recipient's email address, subject, and message content.
      * @throws MessagingException If there is an error in creating or sending the email.
      */
-    public void sendEmail(EmailDto email) throws MessagingException;
+    public void sendEmail(EmailDto email, String templateName) throws MessagingException;
 }

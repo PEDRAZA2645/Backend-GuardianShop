@@ -138,6 +138,9 @@ public class ServicesImpl implements IServicesService {
         ServicesEntity existingService = servicesEntityOpt.get();
         String newServiceName = servicesDto.getName();
         existingService.setName(newServiceName);
+        existingService.setCategoryId(servicesDto.getCategoryId());
+        existingService.setDescription(servicesDto.getDescription());
+        existingService.setImageUrl(servicesDto.getImageUrl());
         List<InventoryEntity> relatedInventories = _inventoryConsultations.findAllByServiceId(existingService.getId());
         for (InventoryEntity inventory : relatedInventories) {
             inventory.setName(newServiceName + " " + inventory.getReference());

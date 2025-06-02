@@ -12,10 +12,7 @@ import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/email")
@@ -38,8 +35,8 @@ public class EmailController {
             @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content(schema = @Schema(implementation = String.class)))
     })
     @PostMapping("/send")
-    private ResponseEntity<String> sendEmail(@RequestBody EmailDto email) throws MessagingException {
-        _iEmailService.sendEmail(email);
+    private ResponseEntity<String> sendEmail(@RequestBody EmailDto email, @RequestParam String templateName) throws MessagingException {
+        _iEmailService.sendEmail(email, templateName);
         return new ResponseEntity<>("Email Sended Successfully", HttpStatus.OK);
     }
 }

@@ -13,6 +13,8 @@ import java.util.Optional;
 public interface IOrderItemRepository extends JpaRepository<OrderItemEntity, Long> {
 //    Page<OrderItemEntity> findAll(Pageable pageable);
     Optional<OrderItemEntity> findByProductIdAndCartId(Long productId, Long cartId);
-
     List<OrderItemEntity> findByOrderId(Long orderId);
+    boolean existsByCartIdAndCreateUser(Long cartId, String createUser);
+    Page<OrderItemEntity> findByCartId(Long cartId, Pageable pageable);
+    List<OrderItemEntity> findByCartId(Long cartId);
 }

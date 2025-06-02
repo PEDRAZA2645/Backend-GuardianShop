@@ -191,17 +191,17 @@ public class ContactFormImpl implements IContactFormService {
     private void sendNotificationEmail(ContactFormDto contactFormDto) throws MessagingException {
         EmailDto emailDtoToClient = new EmailDto();
         emailDtoToClient.setRecipient(contactFormDto.getEmail());
-        emailDtoToClient.setSubject("New Contact Form");
+        emailDtoToClient.setSubject("Confirmation of request received");
         emailDtoToClient.setMessage(String.format("Hello %s %s,\n\nThank you for contacting us. We have received your request, One of our advisors will contact you shortly.",
                 contactFormDto.getName(), contactFormDto.getLastName()));
-        _iEmailService.sendEmail(emailDtoToClient);
+        _iEmailService.sendEmail(emailDtoToClient, "contactConfirmation");
         log.info("Email sent successfully to client: {}", contactFormDto.getEmail());
         EmailDto emailDtoToAdmin = new EmailDto();
         emailDtoToAdmin.setRecipient("americandevopsinnovation@gmail.com");
         emailDtoToAdmin.setSubject("NEW FORM RECEIVED");
         emailDtoToAdmin.setMessage(String.format("A new form has been submitted by Cliente: %s %s, Email: %s, Phone: %s.\n\nMessage:\n%s",
                 contactFormDto.getName(), contactFormDto.getLastName(), contactFormDto.getEmail(), contactFormDto.getPhone(), contactFormDto.getMessage()));
-        _iEmailService.sendEmail(emailDtoToAdmin);
+        _iEmailService.sendEmail(emailDtoToAdmin, "contactConfirmation");
         log.info("Notification email sent successfully to admin.");
     }
 

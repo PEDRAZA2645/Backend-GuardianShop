@@ -2,10 +2,12 @@ package com.ms_security.ms_security.controller;
 
 import com.ms_security.ms_security.persistence.entity.UserEntity;
 import com.ms_security.ms_security.service.IAuthServices;
+import com.ms_security.ms_security.service.IJWTUtilityService;
 import com.ms_security.ms_security.service.IUserService;
 import com.ms_security.ms_security.service.model.dto.ChangePasswordDto;
 import com.ms_security.ms_security.service.model.dto.LoginDto;
 import com.ms_security.ms_security.service.model.dto.ResponseErrorDto;
+import com.nimbusds.jose.JOSEException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -17,6 +19,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,6 +36,7 @@ import java.util.Map;
 public class AuthController {
 
     private final IAuthServices _authServices;
+    private final IJWTUtilityService _jwtUtilityService;
 
     /**
      * Registers a new user.
@@ -101,13 +107,23 @@ public class AuthController {
     @Operation(summary = "Change user password", description = "Resets the user's password.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Password changed successfully"),
+            @ApiResponse(responseCode = "401", description = "Invalid token"),
             @ApiResponse(responseCode = "400", description = "Invalid password or token"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PostMapping("/change-password")
-    public ResponseEntity<String> changePassword(@RequestBody ChangePasswordDto changePasswordDto) throws Exception {
-        _authServices.changePassword(changePasswordDto);
-        return new ResponseEntity<>("Password changed successfully.", HttpStatus.OK);
+    public ResponseEntity<String> changePassword(@RequestBody ChangePasswordDto changePasswordDto) {
+        try {
+            _authServices.changePassword(changePasswordDto);
+            return new ResponseEntity<>("Password changed successfully.", HttpStatus.OK);
+        } catch (Exception e) {
+            // Manejar el caso de token inválido
+            if (e.getMessage().equals("Invalid token")) {
+                return new ResponseEntity<>("Invalid token.", HttpStatus.UNAUTHORIZED);
+            } else {
+                return new ResponseEntity<>("An error occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
     }
 
     @Operation(summary = "Logout user", description = "Logs out the user and invalidates the JWT token.")
@@ -120,5 +136,31 @@ public class AuthController {
         _authServices.logout(token);
 
         return new ResponseEntity<>("Logout successful.", HttpStatus.OK);
+    }
+
+    /**
+     * Validates the provided JWT token.
+     *
+     * @param request a map containing the token to validate
+     * @return ResponseEntity indicating whether the token is valid or not
+     */
+    @Operation(summary = "Validate JWT token", description = "Checks if the provided token is valid.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Token is valid."),
+            @ApiResponse(responseCode = "401", description = "Invalid token.")
+    })
+    @PostMapping("/validate-token")
+    public ResponseEntity<String> validateToken(@RequestBody Map<String, String> request) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException {
+        String token = request.get("token");
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(400).body("Token is required.");
+        }
+
+        boolean isValid = _jwtUtilityService.validateToken(token);
+        if (isValid) {
+            return ResponseEntity.ok("Token is valid.");
+        } else {
+            return ResponseEntity.status(401).body("Invalid token.");
+        }
     }
 }
